@@ -1,0 +1,47 @@
+{
+	"name": "@sorceries/proform",
+	"version": "0.0.0",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"type": "module",
+	"types": "./dist/types/index.d.ts",
+	"scripts": {
+		"test": "vitest",
+		"build": "vue-tsc && vite build",
+		"dev": "nodemon -e .ts,.tsx --ignore dist --exec 'vite build'"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist/"
+	],
+	"author": "yiwwhl<yiwwhl@qq.com>",
+	"repository": "sorceries/proform",
+	"keywords": [
+		"proform"
+	],
+	"license": "MIT",
+	"peerDependencies": {
+		"vue": "^3.4.27"
+	},
+	"devDependencies": {
+		"@types/lodash": "^4.17.5",
+		"@types/node": "^20.14.2",
+		"@vitejs/plugin-vue-jsx": "^4.0.0",
+		"nodemon": "^3.1.3",
+		"vite": "^5.2.11",
+		"vite-plugin-dts": "^3.9.1",
+		"vitest": "^1.6.0"
+	},
+	"dependencies": {
+		"@types/uuid": "^9.0.8",
+		"lodash": "^4.17.21",
+		"uuid": "^10.0.0"
+	}
+}
