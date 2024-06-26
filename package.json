@@ -41,7 +41,6 @@
 	},
 	"dependencies": {
 		"@types/uuid": "^9.0.8",
-		"lodash": "^4.17.21",
-		"uuid": "^10.0.0"
+		"lodash": "^4.17.21"
 	}
 }

@@ -13,14 +13,12 @@ import {
   isPlainObject,
   set,
 } from "lodash";
-import { v4 } from "uuid";
 import { Ref, ref, watch } from "vue";
 
 export default class DataProcessor {
   stableSchemas: Ref<StabledSchema[]>; // stableSchmeas from RenderRuntime
   model: Ref<AnyObject>;
   effects: Record<string, Set<AnyFunction>> = {};
-  schemaIdkey = Symbol.for("schemaIdkey");
   keysWithEffectsByTargetWithEffects = new Map();
   afterModelUpdateEffects = new Map<AnyObject, Set<AnyFunction>>();
   modelProcessProgress = new Map();
@@ -60,7 +58,6 @@ export default class DataProcessor {
   }
 
   processSchema(rawSchema: AnyObject) {
-    rawSchema[this.schemaIdkey] = v4();
     this.stableEachKey({
       target: rawSchema,
     });
