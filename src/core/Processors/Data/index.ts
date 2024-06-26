@@ -5,7 +5,14 @@ import {
 } from "@/core/Processors/Data/types";
 import RenderRuntime from "@/core/Runtimes/Render";
 import { StabledSchema } from "@/core/Runtimes/Render/types";
-import { cloneDeep, get, isEqual, isFunction, set } from "lodash";
+import {
+  cloneDeep,
+  get,
+  isEqual,
+  isFunction,
+  isPlainObject,
+  set,
+} from "lodash";
 import { v4 } from "uuid";
 import { Ref, ref, watch } from "vue";
 
@@ -18,6 +25,7 @@ export default class DataProcessor {
   afterModelUpdateEffects = new Map<AnyObject, Set<AnyFunction>>();
   modelProcessProgress = new Map();
   prevModelState;
+  nonDeepProcessableKeys = ["component"];
 
   constructor(public renderRuntime: RenderRuntime) {
     this.stableSchemas = renderRuntime.stableSchemas;
@@ -27,7 +35,6 @@ export default class DataProcessor {
 
   processSchemas(rawSchemas: RawSchema[]) {
     this.stableSchemas.value = rawSchemas as any;
-    console.log("rawSchema", rawSchemas);
     this.stableSchemas.value.forEach(this.processSchema.bind(this));
 
     watch(
@@ -59,14 +66,16 @@ export default class DataProcessor {
     });
   }
 
-  stableEachKey({ target }: StableEachKeyOptions) {
+  stableEachKey({ target, rawUpdate }: StableEachKeyOptions) {
     Object.keys(target).forEach((key) => {
       this.processValueOrFunction({
         target,
         input: get(target, key),
         key,
         update: (stable) => {
-          set(target, key, stable);
+          rawUpdate
+            ? rawUpdate(set(target, key, stable))
+            : set(target, key, stable);
         },
       });
     });
@@ -111,8 +120,12 @@ export default class DataProcessor {
           if (update) {
             const effect = () => {
               const executionResult = input({ model: this.model.value });
-              this.processSyncOrAsync({
+              this.processValueSyncOrAsync({
                 input: executionResult,
+                key,
+                excludeDeepProcessing:
+                  this.nonDeepProcessableKeys.includes(key),
+                rawUpdate: update,
                 update: (res: any) => {
                   update(res);
                   if (isHandlingDefaultValue) {
@@ -141,13 +154,32 @@ export default class DataProcessor {
     );
   }
 
-  processSyncOrAsync({ input, update }: AnyObject) {
+  processValueSyncOrAsync({
+    input,
+    update,
+    rawUpdate,
+    excludeDeepProcessing,
+  }: AnyObject) {
     if (input instanceof Promise) {
       input.then((res) => {
-        update(res);
+        if (isPlainObject(res) && !excludeDeepProcessing) {
+          this.stableEachKey({
+            target: res,
+            rawUpdate,
+          });
+        } else {
+          update(res);
+        }
       });
     } else {
-      update(input);
+      if (isPlainObject(input) && !excludeDeepProcessing) {
+        this.stableEachKey({
+          target: input,
+          rawUpdate,
+        });
+      } else {
+        update(input);
+      }
     }
   }
 
@@ -155,7 +187,6 @@ export default class DataProcessor {
     target,
     input,
     update,
-    afterUpdate,
     key,
   }: ProcessValueOrFunctionOptions) {
     const isHandlingDefaultValue = key === "defaultValue";
@@ -171,19 +202,22 @@ export default class DataProcessor {
       });
       // undefined 意味着过程中的值
       update?.(undefined);
-      this.processSyncOrAsync({
+
+      this.processValueSyncOrAsync({
         input: fnRes,
+        key,
+        excludeDeepProcessing: this.nonDeepProcessableKeys.includes(key),
+        rawUpdate: update,
         update: (res: any) => {
           if (update) {
             if (
               isHandlingDefaultValue &&
-              !this.keysWithEffectsByTargetWithEffects.get(target).has(key)
+              !this.keysWithEffectsByTargetWithEffects.get(target)?.has(key)
             ) {
               this.handleDefaultValue(target);
             }
             update(res);
           }
-          afterUpdate?.(res);
         },
       });
     } else {
@@ -191,9 +225,13 @@ export default class DataProcessor {
         if (isHandlingDefaultValue) {
           this.handleDefaultValue(target);
         }
-        this.processSyncOrAsync({ input, update });
+        this.processValueSyncOrAsync({
+          input,
+          update,
+          key,
+          excludeDeepProcessing: this.nonDeepProcessableKeys.includes(key),
+        });
       }
-      return afterUpdate?.(input);
     }
   }
 }

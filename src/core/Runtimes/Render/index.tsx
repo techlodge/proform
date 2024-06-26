@@ -3,7 +3,7 @@ import DataProcessor from "@/core/Processors/Data";
 import { RenderOptions, StabledSchema } from "@/core/Runtimes/Render/types";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { Layouts } from "@/helpers/setupForm/types";
-import { get, isString, set } from "lodash";
+import { get, isFunction, isString, set } from "lodash";
 import { ref, toRaw } from "vue";
 
 export default class RenderRuntime {
@@ -17,11 +17,25 @@ export default class RenderRuntime {
       formCreateOption.template
     );
     this.dataProcessor = new DataProcessor(this);
-    this.dataProcessor.processValueOrFunction({
+    this.processRawSchemas({
       input: formCreateOption.schemas,
-      afterUpdate: this.dataProcessor.processSchemas.bind(this.dataProcessor),
+      update: this.dataProcessor.processSchemas.bind(this.dataProcessor),
     });
-    // this.dataProcessor.processSchemas(formCreateOption.schemas);
+  }
+
+  processRawSchemas({ input, update }: AnyObject) {
+    if (isFunction(input)) {
+      const fnRes = input();
+      if (fnRes instanceof Promise) {
+        fnRes.then((schemas) => {
+          update(schemas);
+        });
+      } else {
+        update(fnRes);
+      }
+    } else {
+      update(input);
+    }
   }
 
   renderSchema(stableSchema: StabledSchema) {

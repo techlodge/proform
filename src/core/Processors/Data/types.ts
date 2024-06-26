@@ -2,6 +2,7 @@ export interface RawSchema {}
 
 export interface StableEachKeyOptions {
   target: any;
+  rawUpdate?: AnyFunction;
 }
 
 export interface ProcessValueOrFunctionOptions {
