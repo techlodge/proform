@@ -57,12 +57,7 @@ export default class RenderRuntime {
 
     if (isString(schema.field)) {
       if (!this.dataProcessor.modelProcessProgress.get(schema)) {
-        // TODO: 业务中很少有需要将默认值设置为 "undefined" 的场景，所以目前先 hardCode 的将默认值处理过程中的 undefined 字符串处理为空
-        set(
-          this.model.value,
-          schema.field,
-          schema.defaultValue?.replace(/undefined/g, "")
-        );
+        set(this.model.value, schema.field, schema.defaultValue);
         Array.from(
           this.dataProcessor.afterModelUpdateEffects.get(schema) ?? []
         ).forEach((effect) => effect());
