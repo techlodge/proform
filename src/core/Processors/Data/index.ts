@@ -27,6 +27,7 @@ export default class DataProcessor {
 
   processSchemas(rawSchemas: RawSchema[]) {
     this.stableSchemas.value = rawSchemas as any;
+    console.log("rawSchema", rawSchemas);
     this.stableSchemas.value.forEach(this.processSchema.bind(this));
 
     watch(
@@ -109,22 +110,28 @@ export default class DataProcessor {
           }
           if (update) {
             const effect = () => {
-              update(input({ model: this.model.value }));
-              if (isHandlingDefaultValue) {
-                let afterModelUpdateEffects =
-                  this.afterModelUpdateEffects.get(target);
-                if (!afterModelUpdateEffects) {
-                  afterModelUpdateEffects = new Set();
-                }
-                afterModelUpdateEffects.add(() => {
-                  this.modelProcessProgress.set(target, true);
-                });
-                this.afterModelUpdateEffects.set(
-                  target,
-                  afterModelUpdateEffects
-                );
-                this.effects[field].delete(effect);
-              }
+              const executionResult = input({ model: this.model.value });
+              this.processSyncOrAsync({
+                input: executionResult,
+                update: (res: any) => {
+                  update(res);
+                  if (isHandlingDefaultValue) {
+                    let afterModelUpdateEffects =
+                      this.afterModelUpdateEffects.get(target);
+                    if (!afterModelUpdateEffects) {
+                      afterModelUpdateEffects = new Set();
+                    }
+                    afterModelUpdateEffects.add(() => {
+                      this.modelProcessProgress.set(target, true);
+                    });
+                    this.afterModelUpdateEffects.set(
+                      target,
+                      afterModelUpdateEffects
+                    );
+                    this.effects[field].delete(effect);
+                  }
+                },
+              });
             };
             this.effects[field].add(effect);
           }
@@ -132,6 +139,16 @@ export default class DataProcessor {
         },
       }
     );
+  }
+
+  processSyncOrAsync({ input, update }: AnyObject) {
+    if (input instanceof Promise) {
+      input.then((res) => {
+        update(res);
+      });
+    } else {
+      update(input);
+    }
   }
 
   processValueOrFunction({
@@ -154,8 +171,9 @@ export default class DataProcessor {
       });
       // undefined 意味着过程中的值
       update?.(undefined);
-      if (fnRes instanceof Promise) {
-        return fnRes.then((res) => {
+      this.processSyncOrAsync({
+        input: fnRes,
+        update: (res: any) => {
           if (update) {
             if (
               isHandlingDefaultValue &&
@@ -166,25 +184,16 @@ export default class DataProcessor {
             update(res);
           }
           afterUpdate?.(res);
-        });
-      }
+        },
+      });
+    } else {
       if (update) {
-        if (
-          isHandlingDefaultValue &&
-          !this.keysWithEffectsByTargetWithEffects.get(target).has(key)
-        ) {
+        if (isHandlingDefaultValue) {
           this.handleDefaultValue(target);
         }
-        update(fnRes);
+        this.processSyncOrAsync({ input, update });
       }
-      return afterUpdate?.(fnRes);
+      return afterUpdate?.(input);
     }
-    if (update) {
-      if (isHandlingDefaultValue) {
-        this.handleDefaultValue(target);
-      }
-      update(input);
-    }
-    return afterUpdate?.(input);
   }
 }
