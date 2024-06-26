@@ -131,19 +131,53 @@ export default class DataProcessor {
                 update: (res: any) => {
                   update(res);
                   if (isHandlingDefaultValue) {
-                    let afterModelUpdateEffects =
-                      this.afterModelUpdateEffects.get(target);
-                    if (!afterModelUpdateEffects) {
-                      afterModelUpdateEffects = new Set();
+                    if (this.model.value[field] instanceof Promise) {
+                      this.model.value[field].then((fieldValue: any) => {
+                        this.model.value[field] = fieldValue;
+                        const executionResult = input({
+                          model: this.model.value,
+                        });
+                        this.processValueSyncOrAsync({
+                          input: executionResult,
+                          key,
+                          excludeDeepProcessing:
+                            this.nonDeepProcessableKeys.includes(key),
+                          rawUpdate: update,
+                          update: (res: any) => {
+                            update(res);
+                            if (isHandlingDefaultValue) {
+                              let afterModelUpdateEffects =
+                                this.afterModelUpdateEffects.get(target);
+                              if (!afterModelUpdateEffects) {
+                                afterModelUpdateEffects = new Set();
+                              }
+                              afterModelUpdateEffects.add(() => {
+                                this.modelProcessProgress.set(target, true);
+                              });
+                              this.afterModelUpdateEffects.set(
+                                target,
+                                afterModelUpdateEffects
+                              );
+                              this.effects[field].delete(effect);
+                            }
+                          },
+                        });
+                      });
+                    } else {
+                      let afterModelUpdateEffects =
+                        this.afterModelUpdateEffects.get(target);
+                      if (!afterModelUpdateEffects) {
+                        afterModelUpdateEffects = new Set();
+                      }
+                      afterModelUpdateEffects.add(() => {
+                        this.modelProcessProgress.set(target, true);
+                      });
+                      this.afterModelUpdateEffects.set(
+                        target,
+                        afterModelUpdateEffects
+                      );
+                      this.effects[field].delete(effect);
                     }
-                    afterModelUpdateEffects.add(() => {
-                      this.modelProcessProgress.set(target, true);
-                    });
-                    this.afterModelUpdateEffects.set(
-                      target,
-                      afterModelUpdateEffects
-                    );
-                    this.effects[field].delete(effect);
                   }
                 },
               });
@@ -237,12 +271,20 @@ export default class DataProcessor {
       });
     } else {
       if (update) {
+        if (input instanceof Promise) {
+          input.then(() => {
+            if (isHandlingDefaultValue) {
+              this.handleDefaultValue(target);
+            }
+          });
+        } else {
+          if (isHandlingDefaultValue) {
+            this.handleDefaultValue(target);
+          }
+        }
         this.processValueSyncOrAsync({
           input,
           update: (res: any) => {
-            if (isHandlingDefaultValue) {
-              this.handleDefaultValue(res);
-            }
             update(res);
           },
           rawUpdate: update,
