@@ -12,6 +12,7 @@ import {
   isFunction,
   isPlainObject,
   isString,
+  isUndefined,
   set,
 } from "lodash";
 import { Ref, nextTick, ref, watch } from "vue";
@@ -193,7 +194,9 @@ export default class DataProcessor {
   }: ProcessValueOrFunctionOptions) {
     nextTick(() => {
       if (
-        !target.hasOwnProperty("defaultValue") &&
+        (!target.hasOwnProperty("defaultValue") ||
+          (target.hasOwnProperty("defaultValue") &&
+            isUndefined(target.defaultValue))) &&
         isString(target.field) &&
         this.fieldsWithEffects.has(target.field)
       ) {
