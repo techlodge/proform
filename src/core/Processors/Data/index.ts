@@ -11,9 +11,10 @@ import {
   isEqual,
   isFunction,
   isPlainObject,
+  isString,
   set,
 } from "lodash";
-import { Ref, ref, watch } from "vue";
+import { Ref, nextTick, ref, watch } from "vue";
 
 export default class DataProcessor {
   stableSchemas: Ref<StabledSchema[]>; // stableSchmeas from RenderRuntime
@@ -24,6 +25,7 @@ export default class DataProcessor {
   modelProcessProgress = new Map();
   prevModelState;
   nonDeepProcessableKeys = ["component"];
+  fieldsWithEffects = new Map();
 
   constructor(public renderRuntime: RenderRuntime) {
     this.stableSchemas = renderRuntime.stableSchemas;
@@ -100,6 +102,9 @@ export default class DataProcessor {
       {},
       {
         get: (_, field: string) => {
+          const targets = this.fieldsWithEffects.get(field) ?? new Set();
+          targets.add(target);
+          this.fieldsWithEffects.set(field, targets);
           let keysWithEffectsByTarget =
             this.keysWithEffectsByTargetWithEffects.get(target);
           if (!keysWithEffectsByTarget) {
@@ -186,6 +191,19 @@ export default class DataProcessor {
     update,
     key,
   }: ProcessValueOrFunctionOptions) {
+    nextTick(() => {
+      if (
+        !target.hasOwnProperty("defaultValue") &&
+        isString(target.field) &&
+        this.fieldsWithEffects.has(target.field)
+      ) {
+        Array.from(this.fieldsWithEffects.get(target.field)).forEach(
+          (_target) => {
+            this.modelProcessProgress.set(_target, true);
+          }
+        );
+      }
+    });
     const isHandlingDefaultValue = key === "defaultValue";
     if (isFunction(input)) {
       const fnRes = input({
