@@ -226,16 +226,15 @@ export default class DataProcessor {
     key,
   }: ProcessValueOrFunctionOptions) {
     nextTick(() => {
-      if (
-        !target.hasOwnProperty("defaultValue") &&
-        isString(target.field) &&
-        this.fieldsWithEffects.has(target.field)
-      ) {
-        Array.from(this.fieldsWithEffects.get(target.field)).forEach(
-          (_target) => {
-            this.modelProcessProgress.set(_target, true);
-          }
-        );
+      if (!target.hasOwnProperty("defaultValue") && isString(target.field)) {
+        if (this.fieldsWithEffects.has(target.field)) {
+          Array.from(this.fieldsWithEffects.get(target.field)).forEach(
+            (_target) => {
+              this.modelProcessProgress.set(_target, true);
+            }
+          );
+        }
+        this.modelProcessProgress.set(target, true);
       }
     });
     const isHandlingDefaultValue = key === "defaultValue";
