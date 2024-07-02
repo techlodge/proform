@@ -20,8 +20,8 @@ export default class DataProcessor {
   stableSchemas: Ref<StabledSchema[]>; // stableSchmeas from RenderRuntime
   model: Ref<AnyObject>;
   effects: Record<string, Set<AnyFunction>> = {};
-  inputFilter = new Set();
-  keysWithEffectsByTargetWithEffects = new Map();
+  effetcsFilter = new Set();
+  keysUsingFieldByTarget = new Map();
   afterModelUpdateEffects = new Map<AnyObject, Set<AnyFunction>>();
   modelProcessProgress = new Map();
   prevModelState;
@@ -41,23 +41,19 @@ export default class DataProcessor {
     watch(
       () => this.model.value,
       (newValue) => {
-        if (!isEqual(newValue, this.prevModelState.value)) {
-          for (const key of Object.keys(newValue)) {
-            if (!isEqual(newValue[key], this.prevModelState.value[key])) {
-              console.log("key", key, this.effects);
-              if (this.effects[key]) {
-                Array.from(this.effects[key])?.forEach((effect) => {
-                  effect();
-                });
-              }
-            }
+        if (isEqual(newValue, this.prevModelState.value)) return;
+
+        for (const key of Object.keys(newValue)) {
+          if (
+            !isEqual(newValue[key], this.prevModelState.value[key]) &&
+            this.effects[key]
+          ) {
+            Array.from(this.effects[key]).forEach((effect) => effect());
           }
-          this.prevModelState.value = cloneDeep(newValue);
         }
+        this.prevModelState.value = cloneDeep(newValue);
       },
-      {
-        deep: true,
-      }
+      { deep: true }
     );
   }
 
@@ -83,10 +79,8 @@ export default class DataProcessor {
   }
 
   handleDefaultValue(target: AnyObject) {
-    let afterModelUpdateEffects = this.afterModelUpdateEffects.get(target);
-    if (!afterModelUpdateEffects) {
-      afterModelUpdateEffects = new Set();
-    }
+    let afterModelUpdateEffects =
+      this.afterModelUpdateEffects.get(target) ?? new Set();
     afterModelUpdateEffects.add(() => {
       this.modelProcessProgress.set(target, true);
     });
@@ -104,29 +98,20 @@ export default class DataProcessor {
       {},
       {
         get: (_, field: string) => {
+          // 收集当前 field 被哪些 target 的处理过程所使用
           const targets = this.fieldsWithEffects.get(field) ?? new Set();
           targets.add(target);
           this.fieldsWithEffects.set(field, targets);
+          // 收集当前 target 的哪些 key 使用到了 field，用来在后续处理数据时作为数据判断时机选择的依据
           let keysWithEffectsByTarget =
-            this.keysWithEffectsByTargetWithEffects.get(target);
-          if (!keysWithEffectsByTarget) {
-            keysWithEffectsByTarget = new Set();
-          }
+            this.keysUsingFieldByTarget.get(target) ?? new Set();
           keysWithEffectsByTarget.add(key);
-          this.keysWithEffectsByTargetWithEffects.set(
-            target,
-            keysWithEffectsByTarget
-          );
-          const fieldEffects = this.effects[field];
-          if (!fieldEffects) {
-            this.effects[field] = new Set();
-          }
+          this.keysUsingFieldByTarget.set(target, keysWithEffectsByTarget);
+          this.effects[field] = this.effects[field] ?? new Set();
           if (update) {
-            if (this.inputFilter.has(input)) {
-              return;
-            } else {
-              this.inputFilter.add(input);
-            }
+            if (this.effetcsFilter.has(input)) return;
+            this.effetcsFilter.add(input);
+
             const effect = () => {
               const executionResult = input({ model: this.model.value });
               this.processValueSyncOrAsync({
@@ -139,10 +124,7 @@ export default class DataProcessor {
                   update(res);
                   if (isHandlingDefaultValue) {
                     let afterModelUpdateEffects =
-                      this.afterModelUpdateEffects.get(target);
-                    if (!afterModelUpdateEffects) {
-                      afterModelUpdateEffects = new Set();
-                    }
+                      this.afterModelUpdateEffects.get(target) ?? new Set();
                     afterModelUpdateEffects.add(() => {
                       this.modelProcessProgress.set(target, true);
                     });
@@ -233,7 +215,7 @@ export default class DataProcessor {
           if (update) {
             if (
               isHandlingDefaultValue &&
-              !this.keysWithEffectsByTargetWithEffects.get(target)?.has(key)
+              !this.keysUsingFieldByTarget.get(target)?.has(key)
             ) {
               this.handleDefaultValue(target);
             }
