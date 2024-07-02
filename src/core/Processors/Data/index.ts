@@ -123,15 +123,7 @@ export default class DataProcessor {
                 update: (res: any) => {
                   update(res);
                   if (isHandlingDefaultValue) {
-                    let afterModelUpdateEffects =
-                      this.afterModelUpdateEffects.get(target) ?? new Set();
-                    afterModelUpdateEffects.add(() => {
-                      this.modelProcessProgress.set(target, true);
-                    });
-                    this.afterModelUpdateEffects.set(
-                      target,
-                      afterModelUpdateEffects
-                    );
+                    this.handleDefaultValue(target);
                     this.effects[field].delete(effect);
                   }
                 },
