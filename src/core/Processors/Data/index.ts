@@ -30,7 +30,7 @@ export default class DataProcessor {
   publishedKey = Symbol("publishedKey");
   publishedData = ref({});
   publishEffects = new Map();
-  publishEffectsFilter = new Set();
+  publishEffectsFilter = new Map();
 
   constructor(public renderRuntime: RenderRuntime) {
     this.stableSchemas = renderRuntime.stableSchemas;
@@ -104,8 +104,14 @@ export default class DataProcessor {
           {},
           {
             get: (_, field) => {
-              if (this.publishEffectsFilter.has(update)) return;
-              this.publishEffectsFilter.add(update);
+              const currentKeyFilters =
+                this.publishEffectsFilter.get(key) ?? {};
+              if (!currentKeyFilters[field]) {
+                currentKeyFilters[field] = new Set();
+              }
+              if (currentKeyFilters[field].has(update)) return;
+              currentKeyFilters[field].add(update);
+              this.publishEffectsFilter.set(key, currentKeyFilters);
 
               // 收集当前 target 的哪些 key 使用到了 field，用来在后续处理数据时作为数据判断时机选择的依据
               let keysWithEffectsByTarget =
@@ -146,6 +152,15 @@ export default class DataProcessor {
               const result = (this.publishedData.value[field] = value);
               const publishEffectsByKey: Set<AnyFunction> =
                 this.publishEffects.get(field);
+              if (!publishEffectsByKey) {
+                // TODO: refactor later
+                console.warn(
+                  `[ProForm warn]: Unused published field ${
+                    field as string
+                  }. Expected the field to be utilized within the scope, but it was not referenced.`
+                );
+                return true;
+              }
               Array.from(publishEffectsByKey).forEach((effect) => effect());
               return result;
             },
