@@ -278,18 +278,10 @@ export default class DataProcessor {
         rawUpdate: update,
         update: (res: any) => {
           if (update) {
-            console.log(
-              "target",
-              target,
-              key,
-              isHandlingDefaultValue,
-              !this.keysUsingFieldByTarget.get(target)?.has(key)
-            );
             if (
               isHandlingDefaultValue &&
               !this.keysUsingFieldByTarget.get(target)?.has(key)
             ) {
-              console.log("我需要过来了", target, key);
               this.handleDefaultValue(target);
             }
             update(res);
