@@ -103,11 +103,18 @@ export default class DataProcessor {
         [this.publishedKey]: new Proxy(
           {},
           {
-            get: (_, key) => {
+            get: (_, field) => {
               if (this.publishEffectsFilter.has(update)) return;
               this.publishEffectsFilter.add(update);
+
+              // 收集当前 target 的哪些 key 使用到了 field，用来在后续处理数据时作为数据判断时机选择的依据
+              let keysWithEffectsByTarget =
+                this.keysUsingFieldByTarget.get(target) ?? new Set();
+              keysWithEffectsByTarget.add(key);
+              this.keysUsingFieldByTarget.set(target, keysWithEffectsByTarget);
+
               const publishEffectsByKey =
-                this.publishEffects.get(key) ?? new Set();
+                this.publishEffects.get(field) ?? new Set();
               const effect = () => {
                 const executionResult = input({
                   model: this.model.value,
@@ -123,21 +130,22 @@ export default class DataProcessor {
                   update: (res: any) => {
                     update(res);
                     if (isHandlingDefaultValue) {
+                      this.handleDefaultValue(target);
                       publishEffectsByKey.delete(effect);
                     }
                   },
                 });
               };
               publishEffectsByKey.add(effect);
-              this.publishEffects.set(key, publishEffectsByKey);
+              this.publishEffects.set(field, publishEffectsByKey);
               // @ts-expect-error
-              return this.publishedData.value[key];
+              return this.publishedData.value[field];
             },
-            set: (_, key, value) => {
+            set: (_, field, value) => {
               // @ts-expect-error
-              const result = (this.publishedData.value[key] = value);
+              const result = (this.publishedData.value[field] = value);
               const publishEffectsByKey: Set<AnyFunction> =
-                this.publishEffects.get(key);
+                this.publishEffects.get(field);
               Array.from(publishEffectsByKey).forEach((effect) => effect());
               return result;
             },
@@ -149,10 +157,12 @@ export default class DataProcessor {
           // @ts-expect-error should pass
           if (field === this.publishedKey) {
             return _[this.publishedKey];
-          } // 收集当前 field 被哪些 target 的处理过程所使用
-          const targets = this.fieldsWithEffects.get(field) ?? new Set();
-          targets.add(target);
-          this.fieldsWithEffects.set(field, targets);
+          } // 收集在处理默认值阶段时，当前 field 被哪些 target 的处理过程所使用，用于跳过对相应默认值的处理
+          if (isHandlingDefaultValue) {
+            const targets = this.fieldsWithEffects.get(field) ?? new Set();
+            targets.add(target);
+            this.fieldsWithEffects.set(field, targets);
+          }
           // 收集当前 target 的哪些 key 使用到了 field，用来在后续处理数据时作为数据判断时机选择的依据
           let keysWithEffectsByTarget =
             this.keysUsingFieldByTarget.get(target) ?? new Set();
@@ -191,8 +201,8 @@ export default class DataProcessor {
 
           return this.model.value[field];
         },
-        set: (_, key, value) => {
-          if (key === this.publishedKey) {
+        set: (_, field, value) => {
+          if (field === this.publishedKey) {
             Object.keys(value).forEach((valueKey) => {
               // @ts-expect-error
               _[this.publishedKey][valueKey] = value[valueKey];
