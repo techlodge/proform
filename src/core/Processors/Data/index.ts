@@ -27,6 +27,10 @@ export default class DataProcessor {
   prevModelState;
   nonDeepProcessableKeys = ["component"];
   fieldsWithEffects = new Map();
+  publishedKey = Symbol("publishedKey");
+  publishedData = ref({});
+  publishEffects = new Map();
+  publishEffectsFilter = new Set();
 
   constructor(public renderRuntime: RenderRuntime) {
     this.stableSchemas = renderRuntime.stableSchemas;
@@ -94,11 +98,58 @@ export default class DataProcessor {
     target,
     key,
   }: AnyObject) {
-    return new Proxy(
-      {},
+    const proxyedModel = new Proxy(
+      {
+        [this.publishedKey]: new Proxy(
+          {},
+          {
+            get: (_, key) => {
+              if (this.publishEffectsFilter.has(update)) return;
+              this.publishEffectsFilter.add(update);
+              const publishEffectsByKey =
+                this.publishEffects.get(key) ?? new Set();
+              const effect = () => {
+                const executionResult = input({
+                  model: this.model.value,
+                  published: this.publishedData.value,
+                  publish: (data: AnyObject) => {
+                    proxyedModel[this.publishedKey] = data;
+                  },
+                });
+                this.processValueSyncOrAsync({
+                  input: executionResult,
+                  key,
+                  rawUpdate: update,
+                  update: (res: any) => {
+                    update(res);
+                    if (isHandlingDefaultValue) {
+                      publishEffectsByKey.delete(effect);
+                    }
+                  },
+                });
+              };
+              publishEffectsByKey.add(effect);
+              this.publishEffects.set(key, publishEffectsByKey);
+              // @ts-expect-error
+              return this.publishedData.value[key];
+            },
+            set: (_, key, value) => {
+              // @ts-expect-error
+              const result = (this.publishedData.value[key] = value);
+              const publishEffectsByKey: Set<AnyFunction> =
+                this.publishEffects.get(key);
+              Array.from(publishEffectsByKey).forEach((effect) => effect());
+              return result;
+            },
+          }
+        ),
+      },
       {
         get: (_, field: string) => {
-          // 收集当前 field 被哪些 target 的处理过程所使用
+          // @ts-expect-error should pass
+          if (field === this.publishedKey) {
+            return _[this.publishedKey];
+          } // 收集当前 field 被哪些 target 的处理过程所使用
           const targets = this.fieldsWithEffects.get(field) ?? new Set();
           targets.add(target);
           this.fieldsWithEffects.set(field, targets);
@@ -113,7 +164,13 @@ export default class DataProcessor {
             this.effetcsFilter.add(input);
 
             const effect = () => {
-              const executionResult = input({ model: this.model.value });
+              const executionResult = input({
+                model: this.model.value,
+                published: this.publishedData.value,
+                publish: (data: AnyObject) => {
+                  proxyedModel[this.publishedKey] = data;
+                },
+              });
               this.processValueSyncOrAsync({
                 input: executionResult,
                 key,
@@ -131,10 +188,21 @@ export default class DataProcessor {
             };
             this.effects[field].add(effect);
           }
+
           return this.model.value[field];
+        },
+        set: (_, key, value) => {
+          if (key === this.publishedKey) {
+            Object.keys(value).forEach((valueKey) => {
+              // @ts-expect-error
+              _[this.publishedKey][valueKey] = value[valueKey];
+            });
+          }
+          return true;
         },
       }
     );
+    return proxyedModel;
   }
 
   processValueSyncOrAsync({
@@ -186,14 +254,19 @@ export default class DataProcessor {
     });
     const isHandlingDefaultValue = key === "defaultValue";
     if (isFunction(input)) {
+      const proxyedModel = this.createProxyedModel({
+        update,
+        input,
+        target,
+        key,
+        isHandlingDefaultValue,
+      });
       const fnRes = input({
-        model: this.createProxyedModel({
-          update,
-          input,
-          target,
-          key,
-          isHandlingDefaultValue,
-        }),
+        model: proxyedModel,
+        published: proxyedModel[this.publishedKey],
+        publish: (data: AnyObject) => {
+          proxyedModel[this.publishedKey] = data;
+        },
       });
       // undefined 意味着过程中的值
       update?.(undefined);
@@ -205,10 +278,18 @@ export default class DataProcessor {
         rawUpdate: update,
         update: (res: any) => {
           if (update) {
+            console.log(
+              "target",
+              target,
+              key,
+              isHandlingDefaultValue,
+              !this.keysUsingFieldByTarget.get(target)?.has(key)
+            );
             if (
               isHandlingDefaultValue &&
               !this.keysUsingFieldByTarget.get(target)?.has(key)
             ) {
+              console.log("我需要过来了", target, key);
               this.handleDefaultValue(target);
             }
             update(res);
@@ -217,16 +298,8 @@ export default class DataProcessor {
       });
     } else {
       if (update) {
-        if (input instanceof Promise) {
-          input.then(() => {
-            if (isHandlingDefaultValue) {
-              this.handleDefaultValue(target);
-            }
-          });
-        } else {
-          if (isHandlingDefaultValue) {
-            this.handleDefaultValue(target);
-          }
+        if (isHandlingDefaultValue) {
+          this.handleDefaultValue(target);
         }
         this.processValueSyncOrAsync({
           input,
