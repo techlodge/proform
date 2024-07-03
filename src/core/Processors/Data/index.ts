@@ -28,7 +28,7 @@ export default class DataProcessor {
   nonDeepProcessableKeys = ["component"];
   fieldsWithEffects = new Map();
   publishedKey = Symbol("publishedKey");
-  publishedData = ref({});
+  publishedData = ref<AnyObject>({});
   publishEffects = new Map();
   publishEffectsFilter = new Map();
 
@@ -144,11 +144,9 @@ export default class DataProcessor {
               };
               publishEffectsByKey.add(effect);
               this.publishEffects.set(field, publishEffectsByKey);
-              // @ts-expect-error
               return this.publishedData.value[field];
             },
             set: (_, field, value) => {
-              // @ts-expect-error
               const result = (this.publishedData.value[field] = value);
               const publishEffectsByKey: Set<AnyFunction> =
                 this.publishEffects.get(field);

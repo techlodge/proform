@@ -97,4 +97,13 @@ export default class RenderRuntime {
       </this.layouts.Form>
     );
   }
+
+  publish(data: AnyObject) {
+    Object.keys(data).forEach((k) => {
+      this.dataProcessor.publishedData.value[k] = data[k];
+      const publishEffectsByKey: Set<AnyFunction> =
+        this.dataProcessor.publishEffects.get(k) ?? new Set();
+      Array.from(publishEffectsByKey).forEach((effect) => effect());
+    });
+  }
 }
