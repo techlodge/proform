@@ -64,17 +64,24 @@ export default class RenderRuntime {
       }
     }
 
+    const showable = !schema.hide && !schema.destroy;
+    if (schema.destroy) {
+      delete this.model.value[schema.field];
+    }
+
     return (
-      <this.layouts.FormItem label={schema.label}>
-        <Component
-          {...schema.componentProps}
-          field={schema.field}
-          modelValue={get(this.model.value, schema.field)}
-          onUpdate:modelValue={(value: any) => {
-            set(this.model.value, schema.field, value);
-          }}
-        ></Component>
-      </this.layouts.FormItem>
+      showable && (
+        <this.layouts.FormItem label={schema.label}>
+          <Component
+            {...schema.componentProps}
+            field={schema.field}
+            modelValue={get(this.model.value, schema.field)}
+            onUpdate:modelValue={(value: any) => {
+              set(this.model.value, schema.field, value);
+            }}
+          ></Component>
+        </this.layouts.FormItem>
+      )
     );
   }
 

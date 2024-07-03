@@ -7,6 +7,8 @@ export interface StabledSchema {
   component: Component;
   componentProps?: AnyObject;
   defaultValue?: any;
+  hide?: boolean;
+  destroy?: boolean;
 }
 
 export interface RenderOptions {
