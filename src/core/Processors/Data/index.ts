@@ -1,10 +1,12 @@
 import {
+  CreateProxyedModelOptions,
   ProcessValueOrFunctionOptions,
   RawSchema,
+  StabledSchema,
   StableEachKeyOptions,
 } from "@/core/Processors/Data/types";
 import RenderRuntime from "@/core/Runtimes/Render";
-import { StabledSchema } from "@/core/Runtimes/Render/types";
+import { AnyFunction, AnyObject } from "@/global";
 import {
   cloneDeep,
   get,
@@ -61,7 +63,7 @@ export default class DataProcessor {
     );
   }
 
-  processSchema(rawSchema: AnyObject) {
+  processSchema(rawSchema: RawSchema) {
     this.stableEachKey({
       target: rawSchema,
     });
@@ -82,7 +84,7 @@ export default class DataProcessor {
     });
   }
 
-  handleDefaultValue(target: AnyObject) {
+  handleDefaultValue(target: RawSchema) {
     let afterModelUpdateEffects =
       this.afterModelUpdateEffects.get(target) ?? new Set();
     afterModelUpdateEffects.add(() => {
@@ -97,7 +99,7 @@ export default class DataProcessor {
     isHandlingDefaultValue,
     target,
     key,
-  }: AnyObject) {
+  }: CreateProxyedModelOptions) {
     const proxyedModel = new Proxy(
       {
         [this.publishedKey]: new Proxy(

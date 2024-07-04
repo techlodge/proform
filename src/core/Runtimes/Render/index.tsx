@@ -1,6 +1,8 @@
 import GlobalConfiguration from "@/core/Configurations/Global";
 import DataProcessor from "@/core/Processors/Data";
-import { RenderOptions, StabledSchema } from "@/core/Runtimes/Render/types";
+import { StabledSchema } from "@/core/Processors/Data/types";
+import { RenderOptions } from "@/core/Runtimes/Render/types";
+import { AnyFunction, AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { Layouts } from "@/helpers/setupForm/types";
 import { get, isFunction, isString, set } from "lodash";
