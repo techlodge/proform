@@ -1,23 +1,33 @@
+import { builtinAdaptersConfig } from "@/core/Configurations/Adapters";
 import GlobalConfiguration from "@/core/Configurations/Global";
 import DataProcessor from "@/core/Processors/Data";
 import { StabledSchema } from "@/core/Processors/Data/types";
 import { RenderOptions } from "@/core/Runtimes/Render/types";
-import { AnyFunction, AnyObject } from "@/global";
+import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
-import { Layouts } from "@/helpers/setupForm/types";
+import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
 import { get, isFunction, isString, set } from "lodash";
 import { ref, toRaw } from "vue";
 
 export default class RenderRuntime {
   layouts: Layouts;
+  template: string;
+  adapters: CustomizedAdapter;
   dataProcessor;
   stableSchemas = ref<StabledSchema[]>([]);
   model = ref<AnyObject>({});
 
   constructor(public formCreateOption: FormCreateOptions) {
-    this.layouts = GlobalConfiguration.genLayoutsByTemplate(
-      formCreateOption.template
-    );
+    this.template = GlobalConfiguration.getTemplate(formCreateOption.template);
+    this.layouts = GlobalConfiguration.getLayoutsByTemplate(this.template);
+    const template =
+      GlobalConfiguration.formSetupOptions.templates[this.template];
+    // @ts-expect-error
+    const builtinAdapter = template.builtinAdapter;
+    this.adapters = builtinAdapter
+      ? builtinAdaptersConfig[builtinAdapter]
+      : // @ts-expect-error
+        template.customizedAdapter;
     this.dataProcessor = new DataProcessor(this);
     this.processRawSchemas({
       input: formCreateOption.schemas,
@@ -73,10 +83,12 @@ export default class RenderRuntime {
 
     return (
       showable && (
-        <this.layouts.FormItem label={schema.label}>
+        <this.layouts.FormItem
+          label={schema.label}
+          {...this.adapters.adaptiveFormElementPath(schema.field)}
+        >
           <Component
             {...schema.componentProps}
-            field={schema.field}
             modelValue={get(this.model.value, schema.field)}
             onUpdate:modelValue={(value: any) => {
               set(this.model.value, schema.field, value);
@@ -90,7 +102,7 @@ export default class RenderRuntime {
   execute(): typeof this.layouts.Form {
     const that = this;
     return (
-      <this.layouts.Form v-model={this.model.value}>
+      <this.layouts.Form {...this.adapters.adaptiveFormData(this.model.value)}>
         {{
           default() {
             return that.stableSchemas.value.map(that.renderSchema.bind(that));
@@ -98,14 +110,5 @@ export default class RenderRuntime {
         }}
       </this.layouts.Form>
     );
-  }
-
-  publish(data: AnyObject) {
-    Object.keys(data).forEach((k) => {
-      this.dataProcessor.publishedData.value[k] = data[k];
-      const publishEffectsByKey: Set<AnyFunction> =
-        this.dataProcessor.publishEffects.get(k) ?? new Set();
-      Array.from(publishEffectsByKey).forEach((effect) => effect());
-    });
   }
 }
