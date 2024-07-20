@@ -33,6 +33,7 @@ export interface Context {
   model: AnyObject;
   published: AnyObject;
   publish: (data: AnyObject) => any;
+  hydrate: (data: AnyObject) => any;
 }
 
 export type SchemaTransformer<T> =

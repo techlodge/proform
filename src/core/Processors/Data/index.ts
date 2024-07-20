@@ -130,7 +130,7 @@ export default class DataProcessor {
                   publish: (data: AnyObject) => {
                     proxyedModel[this.publishedKey] = data;
                   },
-                  setModel: (data: AnyObject) => {
+                  hydrate: (data: AnyObject) => {
                     Object.keys(data).forEach((key) => {
                       this.renderRuntime.fieldsHasBeenSet.add(key);
                       this.model.value[key] = data[key];
@@ -194,7 +194,7 @@ export default class DataProcessor {
                 publish: (data: AnyObject) => {
                   proxyedModel[this.publishedKey] = data;
                 },
-                setModel: (data: AnyObject) => {
+                hydrate: (data: AnyObject) => {
                   Object.keys(data).forEach((key) => {
                     this.renderRuntime.fieldsHasBeenSet.add(key);
                     this.model.value[key] = data[key];
@@ -297,7 +297,7 @@ export default class DataProcessor {
         publish: (data: AnyObject) => {
           proxyedModel[this.publishedKey] = data;
         },
-        setModel: (data: AnyObject) => {
+        hydrate: (data: AnyObject) => {
           Object.keys(data).forEach((key) => {
             this.renderRuntime.fieldsHasBeenSet.add(key);
             this.model.value[key] = data[key];
