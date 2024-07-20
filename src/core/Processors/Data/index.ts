@@ -130,6 +130,12 @@ export default class DataProcessor {
                   publish: (data: AnyObject) => {
                     proxyedModel[this.publishedKey] = data;
                   },
+                  setModel: (data: AnyObject) => {
+                    Object.keys(data).forEach((key) => {
+                      this.renderRuntime.fieldsHasBeenSet.add(key);
+                      this.model.value[key] = data[key];
+                    });
+                  },
                 });
                 this.processValueSyncOrAsync({
                   input: executionResult,
@@ -187,6 +193,12 @@ export default class DataProcessor {
                 published: this.publishedData.value,
                 publish: (data: AnyObject) => {
                   proxyedModel[this.publishedKey] = data;
+                },
+                setModel: (data: AnyObject) => {
+                  Object.keys(data).forEach((key) => {
+                    this.renderRuntime.fieldsHasBeenSet.add(key);
+                    this.model.value[key] = data[key];
+                  });
                 },
               });
               this.processValueSyncOrAsync({
@@ -284,6 +296,12 @@ export default class DataProcessor {
         published: proxyedModel[this.publishedKey],
         publish: (data: AnyObject) => {
           proxyedModel[this.publishedKey] = data;
+        },
+        setModel: (data: AnyObject) => {
+          Object.keys(data).forEach((key) => {
+            this.renderRuntime.fieldsHasBeenSet.add(key);
+            this.model.value[key] = data[key];
+          });
         },
       });
       // undefined 意味着过程中的值

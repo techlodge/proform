@@ -16,6 +16,7 @@ export default class RenderRuntime {
   dataProcessor;
   stableSchemas = ref<StabledSchema[]>([]);
   model = ref<AnyObject>({});
+  fieldsHasBeenSet = new Set<string>();
 
   constructor(public formCreateOption: FormCreateOptions) {
     this.template = GlobalConfiguration.getTemplate(formCreateOption.template);
@@ -68,6 +69,9 @@ export default class RenderRuntime {
     if (!Component) return;
 
     if (isString(schema.field)) {
+      if (this.fieldsHasBeenSet.has(schema.field)) {
+        this.dataProcessor.modelProcessProgress.set(schema, true);
+      }
       if (!this.dataProcessor.modelProcessProgress.get(schema)) {
         set(this.model.value, schema.field, schema.defaultValue);
         Array.from(

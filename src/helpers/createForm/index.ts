@@ -17,6 +17,12 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           Array.from(publishEffectsByKey).forEach((effect) => effect());
         });
       },
+      setModel: (data: AnyObject) => {
+        Object.keys(data).forEach((key) => {
+          renderRuntime.fieldsHasBeenSet.add(key);
+          renderRuntime.model.value[key] = data[key];
+        });
+      },
     },
   ] as const;
 }
