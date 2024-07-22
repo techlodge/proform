@@ -1,3 +1,4 @@
+import { AnyObject } from "@/global";
 import { CustomizedAdapter } from "@/helpers";
 
 export const ArcoDesignBuiltinAdapters: CustomizedAdapter = {
@@ -8,6 +9,14 @@ export const ArcoDesignBuiltinAdapters: CustomizedAdapter = {
     return {
       model,
     };
+  },
+  adaptiveValidate(formRef: AnyObject) {
+    return formRef.value.validate().then((errors?: AnyObject) => {
+      if (errors) {
+        return Promise.reject(errors);
+      }
+      return Promise.resolve();
+    });
   },
   adaptiveClearValidate() {
     return;

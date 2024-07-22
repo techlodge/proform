@@ -7,7 +7,7 @@ import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
 import { get, isFunction, isString, set } from "lodash";
-import { ref, toRaw } from "vue";
+import { defineComponent, ref, toRaw } from "vue";
 
 export default class RenderRuntime {
   layouts: Layouts;
@@ -17,6 +17,7 @@ export default class RenderRuntime {
   stableSchemas = ref<StabledSchema[]>([]);
   model = ref<AnyObject>({});
   fieldsHasBeenSet = new Set<string>();
+  formRef = ref();
 
   constructor(public formCreateOption: FormCreateOptions) {
     this.template = GlobalConfiguration.getTemplate(formCreateOption.template);
@@ -105,14 +106,23 @@ export default class RenderRuntime {
 
   execute(): typeof this.layouts.Form {
     const that = this;
-    return (
-      <this.layouts.Form {...this.adapters.adaptiveFormData(this.model.value)}>
-        {{
-          default() {
-            return that.stableSchemas.value.map(that.renderSchema.bind(that));
-          },
-        }}
-      </this.layouts.Form>
-    );
+    return defineComponent({
+      setup() {
+        return () => (
+          <that.layouts.Form
+            {...that.adapters.adaptiveFormData(that.model.value)}
+            ref={that.formRef}
+          >
+            {{
+              default() {
+                return that.stableSchemas.value.map(
+                  that.renderSchema.bind(that)
+                );
+              },
+            }}
+          </that.layouts.Form>
+        );
+      },
+    });
   }
 }

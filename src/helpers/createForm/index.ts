@@ -8,7 +8,13 @@ export function createForm(formCreateOptions: FormCreateOptions) {
   return [
     renderRuntime.execute(),
     {
-      submit() {},
+      submit() {
+        return renderRuntime.adapters
+          .adaptiveValidate(renderRuntime.formRef)
+          .then(() => {
+            return renderRuntime.model.value;
+          });
+      },
       publish(data: AnyObject) {
         Object.keys(data).forEach((k) => {
           renderRuntime.dataProcessor.publishedData.value[k] = data[k];

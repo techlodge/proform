@@ -1,4 +1,4 @@
-import { AnyFunction } from "@/global";
+import { AnyFunction, AnyPromiseFunction } from "@/global";
 
 export type Component = any;
 
@@ -9,6 +9,8 @@ export interface CustomizedAdapter {
   adaptiveFormElementPath: AnyFunction;
   // 用来表述 FormItem 对应的表单数据对象
   adaptiveFormData: AnyFunction;
+  // 用来描述 FormItem 里的组件的校验
+  adaptiveValidate: AnyPromiseFunction;
   // 用来描述 FormItem 里的组件的清除校验
   adaptiveClearValidate: AnyFunction;
 }
