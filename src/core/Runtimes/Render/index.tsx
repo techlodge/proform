@@ -1,7 +1,7 @@
 import { builtinAdaptersConfig } from "@/core/Configurations/Adapters";
 import GlobalConfiguration from "@/core/Configurations/Global";
 import DataProcessor from "@/core/Processors/Data";
-import { StabledSchema } from "@/core/Processors/Data/types";
+import { DOMType, StabledSchema } from "@/core/Processors/Data/types";
 import { RenderOptions } from "@/core/Runtimes/Render/types";
 import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
@@ -66,7 +66,7 @@ export default class RenderRuntime {
   }
 
   renderItemSchema({ schema }: RenderOptions) {
-    const Component = toRaw(schema.component);
+    const Component = toRaw(schema.component) as DOMType;
     if (!Component) return;
 
     if (isString(schema.field)) {

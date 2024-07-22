@@ -1,4 +1,5 @@
 import { AnyFunction, AnyObject } from "@/global";
+import { VNode } from "vue";
 
 export type DOMType = new (...args: any[]) => AnyObject & {
   $props: AnyObject;
@@ -20,7 +21,7 @@ export interface StabledItemSchema {
   type?: "item";
   label?: string;
   field: string;
-  component: DOMType;
+  component: DOMType | VNode;
   componentProps?: Record<string, SchemaTransformer<FlexibleType>>;
   defaultValue?: PropertyKey | object;
   hide?: boolean;
