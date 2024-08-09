@@ -1,4 +1,4 @@
-import { AnyFunction, AnyObject } from "@/global";
+import { AnyArray, AnyFunction, AnyObject } from "@/global";
 import { VNode } from "vue";
 
 export type DOMType = new (...args: any[]) => AnyObject & {
@@ -26,6 +26,8 @@ export interface StabledItemSchema {
   defaultValue?: PropertyKey | object;
   hide?: boolean;
   destroy?: boolean;
+  rules?: AnyArray;
+  required?: boolean | string;
 }
 
 export type StabledSchema = StabledItemSchema;

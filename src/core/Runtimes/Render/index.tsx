@@ -6,7 +6,7 @@ import { RenderOptions } from "@/core/Runtimes/Render/types";
 import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
-import { get, isFunction, isString, set } from "lodash";
+import { get, isBoolean, isFunction, isString, set } from "lodash";
 import { defineComponent, ref, toRaw } from "vue";
 
 export default class RenderRuntime {
@@ -86,10 +86,31 @@ export default class RenderRuntime {
       delete this.model.value[schema.field];
     }
 
+    const { label, required, rules: originalRules } = schema;
+    const defaultRequiredMessage = `${label}是必填项`;
+    const rules = originalRules ? [...originalRules] : [];
+    const requiredRuleIndex = rules.findIndex((rule) => rule.required);
+    if (isString(required)) {
+      const rule = { required: true, message: required };
+      if (requiredRuleIndex >= 0) {
+        rules[requiredRuleIndex] = rule;
+      } else {
+        rules.unshift(rule);
+      }
+    } else if (isBoolean(required) && required) {
+      const rule = { required: true, message: defaultRequiredMessage };
+      if (requiredRuleIndex >= 0) {
+        rules[requiredRuleIndex] = rule;
+      } else {
+        rules.unshift(rule);
+      }
+    }
+
     return (
       showable && (
         <this.layouts.FormItem
           label={schema.label}
+          rules={rules}
           {...this.adapters.adaptiveFormElementPath(schema.field)}
         >
           <Component
