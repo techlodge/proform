@@ -2,6 +2,11 @@ import { AnyFunction, AnyObject } from "@/global";
 import { FormCreateOptions } from "./types";
 import FormCreateProcessor from "@/core/Processors/FormCreate";
 
+/**
+ * vision
+ * 1、support i18n
+ */
+
 export function createForm(formCreateOptions: FormCreateOptions) {
   const formCreateProcessor = new FormCreateProcessor(formCreateOptions);
   const renderRuntime = formCreateProcessor.renderRuntime;
@@ -29,6 +34,8 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           renderRuntime.model.value[key] = data[key];
         });
       },
+      // TODO: reset 需要实现三种情况：【1、只 reset model 】【2、只 reset validate】【3、都 reset】
+      reset() {},
     },
   ] as const;
 }
