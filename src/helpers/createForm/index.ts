@@ -1,6 +1,7 @@
 import { AnyFunction, AnyObject } from "@/global";
 import { FormCreateOptions } from "./types";
 import FormCreateProcessor from "@/core/Processors/FormCreate";
+import { isUndefined } from "lodash";
 
 /**
  * vision
@@ -34,8 +35,32 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           renderRuntime.model.value[key] = data[key];
         });
       },
-      // TODO: reset 需要实现三种情况：【1、只 reset model 】【2、只 reset validate】【3、都 reset】
-      reset() {},
+      reset({ model = true, validate = true } = {}) {
+        const resetValidate = () =>
+          renderRuntime.adapters.adaptiveClearValidate(renderRuntime.formRef);
+        const resetModel = () => {
+          Object.keys(renderRuntime.model.value).forEach((key) => {
+            renderRuntime.model.value[key] = undefined;
+          });
+          Array.from(renderRuntime.dataProcessor.defaultValueEffects).forEach(
+            (effect) => {
+              effect();
+            }
+          );
+        };
+        const stack = [];
+        if (model === true) {
+          stack.push(resetModel);
+        }
+        if (validate === true) {
+          stack.push(resetValidate);
+        }
+        if (isUndefined(model) && isUndefined(validate)) {
+          stack.push(resetValidate);
+          stack.push(resetModel);
+        }
+        stack.forEach((fn) => fn());
+      },
     },
   ] as const;
 }

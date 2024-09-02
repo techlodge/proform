@@ -33,6 +33,7 @@ export default class DataProcessor {
   publishedData = ref<AnyObject>({});
   publishEffects = new Map();
   publishEffectsFilter = new Map();
+  defaultValueEffects = new Set<AnyFunction>();
 
   constructor(public renderRuntime: RenderRuntime) {
     this.stableSchemas = renderRuntime.stableSchemas;
@@ -146,6 +147,9 @@ export default class DataProcessor {
                     if (isHandlingDefaultValue) {
                       this.handleDefaultValue(target);
                       publishEffectsByKey.delete(effect);
+                      this.defaultValueEffects.add(() => {
+                        set(this.model.value, target.field as string, res);
+                      });
                     }
                   },
                 });
@@ -212,6 +216,9 @@ export default class DataProcessor {
                   if (isHandlingDefaultValue) {
                     this.handleDefaultValue(target);
                     this.effects[field].delete(effect);
+                    this.defaultValueEffects.add(() => {
+                      set(this.model.value, target.field as string, res);
+                    });
                   }
                 },
               });
@@ -314,11 +321,13 @@ export default class DataProcessor {
         rawUpdate: update,
         update: (res: any) => {
           if (update) {
-            if (
-              isHandlingDefaultValue &&
-              !this.keysUsingFieldByTarget.get(target)?.has(key)
-            ) {
-              this.handleDefaultValue(target);
+            if (isHandlingDefaultValue) {
+              this.defaultValueEffects.add(() => {
+                set(this.model.value, target.field as string, res);
+              });
+              if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
+                this.handleDefaultValue(target);
+              }
             }
             update(res);
           }
@@ -331,7 +340,14 @@ export default class DataProcessor {
         }
         this.processValueSyncOrAsync({
           input,
-          update,
+          update: (res: any) => {
+            update(res);
+            if (isHandlingDefaultValue) {
+              this.defaultValueEffects.add(() => {
+                set(this.model.value, target.field as string, res);
+              });
+            }
+          },
           rawUpdate: update,
           key,
           excludeDeepProcessing: this.nonDeepProcessableKeys.includes(key),

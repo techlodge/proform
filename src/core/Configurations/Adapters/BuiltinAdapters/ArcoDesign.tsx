@@ -18,7 +18,7 @@ export const ArcoDesignBuiltinAdapters: CustomizedAdapter = {
       return Promise.resolve();
     });
   },
-  adaptiveClearValidate() {
-    return;
+  adaptiveClearValidate(formRef: AnyObject) {
+    return formRef.value.clearValidate();
   },
 };
