@@ -7,11 +7,6 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Features
 
 - Enable tag_pattern
-
-## [0.0.1] - 2024-09-02
-
-### 🚀 Features
-
 - Implement deep update when processing values as objects
 - Forcefully replace all occurrences of 'undefined' strings with default values
 - Allow schema field values to directly use Promise objects
@@ -46,7 +41,6 @@ All notable changes to this project will be documented in this file.
 
 ### 📚 Documentation
 
-- Clean up console log statements
 - Clean up console log statements
 
 ### ⚙️ Miscellaneous Tasks
