@@ -8,7 +8,7 @@
   "scripts": {
     "test": "vitest",
     "build": "vue-tsc && vite build",
-    "dev": "nodemon -e .ts,.tsx --ignore dist --exec 'vite build'"
+    "dev": "nodemon -e .ts,.tsx --ignore dist --exec 'vite build --mode development'"
   },
   "exports": {
     ".": {
