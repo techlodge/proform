@@ -40,13 +40,9 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           renderRuntime.adapters.adaptiveClearValidate(renderRuntime.formRef);
         const resetModel = () => {
           Object.keys(renderRuntime.model.value).forEach((key) => {
-            renderRuntime.model.value[key] = undefined;
+            renderRuntime.model.value[key] =
+              renderRuntime.defaultValueModel[key];
           });
-          Array.from(renderRuntime.dataProcessor.defaultValueEffects).forEach(
-            (effect) => {
-              effect();
-            }
-          );
         };
         const stack = [];
         if (model === true) {

@@ -6,6 +6,7 @@ import { RenderOptions } from "@/core/Runtimes/Render/types";
 import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
+import { produce } from "immer";
 import { get, isBoolean, isFunction, isString, set } from "lodash";
 import { defineComponent, ref, toRaw } from "vue";
 
@@ -16,6 +17,7 @@ export default class RenderRuntime {
   dataProcessor;
   stableSchemas = ref<StabledSchema[]>([]);
   model = ref<AnyObject>({});
+  defaultValueModel: AnyObject = produce({}, () => {});
   fieldsHasBeenSet = new Set<string>();
   formRef = ref();
 

@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@types/uuid": "^9.0.8",
+    "immer": "^10.1.1",
     "lodash": "^4.17.21"
   },
   "publishConfig": {

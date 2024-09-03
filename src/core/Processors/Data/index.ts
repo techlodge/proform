@@ -17,6 +17,7 @@ import {
   set,
 } from "lodash";
 import { Ref, nextTick, ref, watch } from "vue";
+import { produce } from "immer";
 
 export default class DataProcessor {
   stableSchemas: Ref<StabledSchema[]>; // stableSchmeas from RenderRuntime
@@ -33,13 +34,19 @@ export default class DataProcessor {
   publishedData = ref<AnyObject>({});
   publishEffects = new Map();
   publishEffectsFilter = new Map();
-  defaultValueEffects = new Set<AnyFunction>();
 
   constructor(public renderRuntime: RenderRuntime) {
     this.stableSchemas = renderRuntime.stableSchemas;
     this.model = renderRuntime.model;
     this.prevModelState = ref(cloneDeep(renderRuntime.model.value));
   }
+
+  updatedefaultValueModel = (updater: (draft: AnyObject) => void) => {
+    this.renderRuntime.defaultValueModel = produce(
+      this.renderRuntime.defaultValueModel,
+      updater
+    );
+  };
 
   processSchemas(rawSchemas: RawSchema[]) {
     this.stableSchemas.value = rawSchemas as any;
@@ -147,8 +154,8 @@ export default class DataProcessor {
                     if (isHandlingDefaultValue) {
                       this.handleDefaultValue(target);
                       publishEffectsByKey.delete(effect);
-                      this.defaultValueEffects.add(() => {
-                        set(this.model.value, target.field as string, res);
+                      this.updatedefaultValueModel((draft) => {
+                        draft[target.field as string] = res;
                       });
                     }
                   },
@@ -180,6 +187,7 @@ export default class DataProcessor {
             const targets = this.fieldsWithEffects.get(field) ?? new Set();
             targets.add(target);
             this.fieldsWithEffects.set(field, targets);
+            this.handleDefaultValue(target);
           }
           // 收集当前 target 的哪些 key 使用到了 field，用来在后续处理数据时作为数据判断时机选择的依据
           let keysWithEffectsByTarget =
@@ -188,7 +196,8 @@ export default class DataProcessor {
           this.keysUsingFieldByTarget.set(target, keysWithEffectsByTarget);
           this.effects[field] = this.effects[field] ?? new Set();
           if (update) {
-            if (this.effetcsFilter.has(input)) return;
+            if (this.effetcsFilter.has(input) && !isHandlingDefaultValue)
+              return;
             this.effetcsFilter.add(input);
 
             const effect = () => {
@@ -216,8 +225,8 @@ export default class DataProcessor {
                   if (isHandlingDefaultValue) {
                     this.handleDefaultValue(target);
                     this.effects[field].delete(effect);
-                    this.defaultValueEffects.add(() => {
-                      set(this.model.value, target.field as string, res);
+                    this.updatedefaultValueModel((draft) => {
+                      draft[target.field as string] = res;
                     });
                   }
                 },
@@ -322,8 +331,8 @@ export default class DataProcessor {
         update: (res: any) => {
           if (update) {
             if (isHandlingDefaultValue) {
-              this.defaultValueEffects.add(() => {
-                set(this.model.value, target.field as string, res);
+              this.updatedefaultValueModel((draft) => {
+                draft[target.field as string] = res;
               });
               if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
                 this.handleDefaultValue(target);
@@ -343,8 +352,8 @@ export default class DataProcessor {
           update: (res: any) => {
             update(res);
             if (isHandlingDefaultValue) {
-              this.defaultValueEffects.add(() => {
-                set(this.model.value, target.field as string, res);
+              this.updatedefaultValueModel((draft) => {
+                draft[target.field as string] = res;
               });
             }
           },
