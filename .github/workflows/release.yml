@@ -27,7 +27,7 @@ jobs:
         run: pnpm install
 
       - name: Build Project
-        run: pnpm build
+        run: pnpm build --mode production
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets

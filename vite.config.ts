@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import vueJSX from "@vitejs/plugin-vue-jsx";
 import dts from "vite-plugin-dts";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   resolve: {
     alias: [
       {
@@ -36,7 +36,7 @@ export default defineConfig({
         comments: false,
       },
     },
-    sourcemap: "inline",
+    sourcemap: mode === "development" ? "inline" : false,
   },
   plugins: [
     vueJSX(),
@@ -47,4 +47,4 @@ export default defineConfig({
       exclude: ["**/*.spec.ts", "**/*.spec.tsx"],
     }),
   ],
-});
+}));
