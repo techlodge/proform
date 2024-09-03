@@ -15,7 +15,7 @@ import {
   isPlainObject,
   isString,
   set,
-} from "lodash";
+} from "lodash-es";
 import { Ref, nextTick, ref, watch } from "vue";
 import { produce } from "immer";
 

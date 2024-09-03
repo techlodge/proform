@@ -1,7 +1,7 @@
 import { AnyFunction, AnyObject } from "@/global";
 import { FormCreateOptions } from "./types";
 import FormCreateProcessor from "@/core/Processors/FormCreate";
-import { isUndefined } from "lodash";
+import { isUndefined } from "lodash-es";
 
 /**
  * vision

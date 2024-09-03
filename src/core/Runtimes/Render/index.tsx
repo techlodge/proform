@@ -7,7 +7,7 @@ import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
 import { produce } from "immer";
-import { get, isBoolean, isFunction, isString, set } from "lodash";
+import { get, isBoolean, isFunction, isString, set } from "lodash-es";
 import { defineComponent, ref, toRaw } from "vue";
 
 export default class RenderRuntime {
