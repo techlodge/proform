@@ -232,7 +232,9 @@ export default class DataProcessor {
                 },
               });
             };
-            this.effects[field].add(effect);
+            if (!isHandlingDefaultValue) {
+              this.effects[field].add(effect);
+            }
           }
 
           return this.model.value[field];
