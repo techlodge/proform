@@ -2,11 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.1] - 2024-09-02
+## [unreleased]
 
 ### 🚀 Features
 
 - Enable tag_pattern
+- Implement my-changelog-config
+
+### 🐛 Bug Fixes
+
+- Fix: resolve data reset error issue
+
+### 🚜 Refactor
+
+- Use immerjs to restructure reset logic and optimize default value handling
+- Reduce bundle size
+- Disable sourcemap generation for production builds
+
+### ⚙️ Miscellaneous Tasks
+
+- Update README.md and CHANGELOG.md
+- Update CHAHGELOG.md
+- Add --mode development to cmd dev
+- Release proform to v0.0.1
+
+## [0.0.1] - 2024-09-02
+
+### 🚀 Features
+
 - Implement deep update when processing values as objects
 - Forcefully replace all occurrences of 'undefined' strings with default values
 - Allow schema field values to directly use Promise objects
@@ -41,6 +64,7 @@ All notable changes to this project will be documented in this file.
 
 ### 📚 Documentation
 
+- Clean up console log statements
 - Clean up console log statements
 
 ### ⚙️ Miscellaneous Tasks

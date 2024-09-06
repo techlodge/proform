@@ -17,6 +17,17 @@ type FlexibleType =
   | object
   | {};
 
+export interface Customizations {
+  form?: {
+    props?: AnyObject;
+    slots?: AnyObject;
+  };
+  formItem?: {
+    props?: AnyObject;
+    slots?: AnyObject;
+  };
+}
+
 export interface StabledItemSchema {
   type?: "item";
   label?: string;
@@ -28,6 +39,7 @@ export interface StabledItemSchema {
   destroy?: boolean;
   rules?: AnyArray;
   required?: boolean | string;
+  customizations?: Customizations;
 }
 
 export type StabledSchema = StabledItemSchema;

@@ -2,12 +2,13 @@ import { builtinAdaptersConfig } from "@/core/Configurations/Adapters";
 import GlobalConfiguration from "@/core/Configurations/Global";
 import DataProcessor from "@/core/Processors/Data";
 import { DOMType, StabledSchema } from "@/core/Processors/Data/types";
+import RuntimeHandler from "@/core/Runtimes/Handler";
 import { RenderOptions } from "@/core/Runtimes/Render/types";
 import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
 import { produce } from "immer";
-import { get, isBoolean, isFunction, isString, set } from "lodash-es";
+import { get, isBoolean, isFunction, isString, merge, set } from "lodash-es";
 import { defineComponent, ref, toRaw } from "vue";
 
 export default class RenderRuntime {
@@ -20,6 +21,9 @@ export default class RenderRuntime {
   defaultValueModel: AnyObject = produce({}, () => {});
   fieldsHasBeenSet = new Set<string>();
   formRef = ref();
+  runtimeHandler: RuntimeHandler;
+  formProps;
+  formSlots;
 
   constructor(public formCreateOption: FormCreateOptions) {
     this.template = GlobalConfiguration.getTemplate(formCreateOption.template);
@@ -37,6 +41,10 @@ export default class RenderRuntime {
       input: formCreateOption.schemas,
       update: this.dataProcessor.processSchemas.bind(this.dataProcessor),
     });
+    this.runtimeHandler = new RuntimeHandler();
+    const inited = this.runtimeHandler.initFormPropsAndSlots();
+    this.formProps = inited.formProps;
+    this.formSlots = inited.formSlots;
   }
 
   processRawSchemas({ input, update }: AnyObject) {
@@ -70,6 +78,16 @@ export default class RenderRuntime {
   renderItemSchema({ schema }: RenderOptions) {
     const Component = toRaw(schema.component) as DOMType;
     if (!Component) return;
+
+    const {
+      formProps = {},
+      formSlots = {},
+      formItemProps = {},
+      formItemSlots = {},
+    } = this.runtimeHandler.handleCustomizations(schema.customizations);
+
+    merge(this.formProps.value, formProps);
+    merge(this.formSlots.value, formSlots);
 
     if (isString(schema.field)) {
       if (this.fieldsHasBeenSet.has(schema.field)) {
@@ -111,41 +129,46 @@ export default class RenderRuntime {
     return (
       showable && (
         <this.layouts.FormItem
+          {...formItemProps}
           label={schema.label}
           rules={rules}
           {...this.adapters.adaptiveFormElementPath(schema.field)}
         >
-          <Component
-            {...schema.componentProps}
-            modelValue={get(this.model.value, schema.field)}
-            onUpdate:modelValue={(value: any) => {
-              set(this.model.value, schema.field, value);
-            }}
-          ></Component>
+          {{
+            ...formItemSlots,
+            default: () => {
+              return (
+                <Component
+                  {...schema.componentProps}
+                  modelValue={get(this.model.value, schema.field)}
+                  onUpdate:modelValue={(value: any) => {
+                    set(this.model.value, schema.field, value);
+                  }}
+                />
+              );
+            },
+          }}
         </this.layouts.FormItem>
       )
     );
   }
 
   execute(): typeof this.layouts.Form {
-    const that = this;
-    return defineComponent({
-      setup() {
-        return () => (
-          <that.layouts.Form
-            {...that.adapters.adaptiveFormData(that.model.value)}
-            ref={that.formRef}
-          >
-            {{
-              default() {
-                return that.stableSchemas.value.map(
-                  that.renderSchema.bind(that)
-                );
-              },
-            }}
-          </that.layouts.Form>
-        );
-      },
+    return defineComponent(() => {
+      return () => (
+        <this.layouts.Form
+          {...this.formProps.value}
+          {...this.adapters.adaptiveFormData(this.model.value)}
+          ref={this.formRef}
+        >
+          {{
+            ...this.formSlots.value,
+            default: () => {
+              return this.stableSchemas.value.map(this.renderSchema.bind(this));
+            },
+          }}
+        </this.layouts.Form>
+      );
     });
   }
 }
