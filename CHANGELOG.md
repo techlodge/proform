@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.0.1
+
+### Patch Changes
+
+### 🚀 Features
+
+- Enable tag_pattern
+- Implement my-changelog-config
+
+### 🐛 Bug Fixes
+
+- Fix: resolve data reset error issue
+
+### 🚜 Refactor
+
+- Use immerjs to restructure reset logic and optimize default value handling
+- Reduce bundle size
+- Disable sourcemap generation for production builds
+
+### ⚙️ Miscellaneous Tasks
+
+- Update README.md and CHANGELOG.md
+- Update CHAHGELOG.md
+- Add --mode development to cmd dev
+- Release proform to v0.0.1
+
 All notable changes to this project will be documented in this file.
 
 ## [unreleased]
