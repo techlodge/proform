@@ -23,7 +23,7 @@ export default class DataProcessor {
   stableSchemas: Ref<StabledSchema[]>; // stableSchmeas from RenderRuntime
   model: Ref<AnyObject>;
   effects: Record<string, Set<AnyFunction>> = {};
-  effetcsFilter = new Set();
+  effetcsFilter = new Map();
   keysUsingFieldByTarget = new Map();
   afterModelUpdateEffects = new Map<AnyObject, Set<AnyFunction>>();
   modelProcessProgress = new Map();
@@ -196,9 +196,15 @@ export default class DataProcessor {
           this.keysUsingFieldByTarget.set(target, keysWithEffectsByTarget);
           this.effects[field] = this.effects[field] ?? new Set();
           if (update) {
-            if (this.effetcsFilter.has(input) && !isHandlingDefaultValue)
+            if (!this.effetcsFilter.get(field)) {
+              this.effetcsFilter.set(field, new Set());
+            }
+            if (
+              this.effetcsFilter.get(field).has(input) &&
+              !isHandlingDefaultValue
+            )
               return;
-            this.effetcsFilter.add(input);
+            this.effetcsFilter.get(field).add(input);
 
             const effect = () => {
               const executionResult = input({
