@@ -1,5 +1,5 @@
-import { StabledSchema } from "@/core/Processors/Data/types";
+import { PartialStabledSchema } from "@/core/Processors/Data/types";
 
 export interface RenderOptions {
-  schema: StabledSchema; // 当前 schema
+  schema: PartialStabledSchema; // 当前 schema
 }

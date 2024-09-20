@@ -18,6 +18,10 @@ export interface CustomizedAdapter {
 export interface Layouts {
   Form: Component;
   FormItem: Component;
+  FormLayouts: {
+    ListWrapper: Component;
+    ListItem: Component;
+  };
 }
 
 export type Templates = Record<

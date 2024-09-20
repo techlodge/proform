@@ -153,6 +153,10 @@ export default class RenderRuntime {
     );
   }
 
+  renderListSchema({ schema }: RenderOptions) {
+    return this.renderItemSchema({ schema });
+  }
+
   execute(): typeof this.layouts.Form {
     return defineComponent(() => {
       return () => (
