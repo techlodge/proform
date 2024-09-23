@@ -214,11 +214,7 @@ export default class DataProcessor {
                   key,
                   rawUpdate: update,
                   update: (res: any) => {
-                    if (parentTarget) {
-                      update(res, parentTarget);
-                    } else {
-                      update(res);
-                    }
+                    update(res, parentTarget);
                     if (isHandlingDefaultValue) {
                       this.handleDefaultValue(target);
                       publishEffectsByKey.delete(effect);
@@ -295,11 +291,7 @@ export default class DataProcessor {
                   this.nonDeepProcessableKeys.includes(key),
                 rawUpdate: update,
                 update: (res: any) => {
-                  if (parentTarget) {
-                    update(res, parentTarget);
-                  } else {
-                    update(res);
-                  }
+                  update(res, parentTarget);
                   if (isHandlingDefaultValue) {
                     this.handleDefaultValue(target);
                     this.effects[field].delete(effect);
