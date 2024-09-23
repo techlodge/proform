@@ -422,10 +422,11 @@ export default class DataProcessor {
               } else {
                 this.updatedefaultValueModel((draft) => {
                   if (!draft[parentTarget.field as string]) {
-                    draft[parentTarget.field as string] = {};
+                    draft[parentTarget.field as string] = [{}];
                   }
-                  draft[parentTarget.field as string][target.field as string] =
-                    res;
+                  draft[parentTarget.field as string][0][
+                    target.field as string
+                  ] = res;
                 });
                 if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
                   this.handleDefaultValue(target);
