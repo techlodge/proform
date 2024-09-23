@@ -1,7 +1,7 @@
 import { AnyFunction, AnyObject } from "@/global";
 import { FormCreateOptions } from "./types";
 import FormCreateProcessor from "@/core/Processors/FormCreate";
-import { isUndefined } from "lodash-es";
+import { cloneDeep, isUndefined } from "lodash-es";
 
 /**
  * vision
@@ -40,8 +40,9 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           renderRuntime.adapters.adaptiveClearValidate(renderRuntime.formRef);
         const resetModel = () => {
           Object.keys(renderRuntime.model.value).forEach((key) => {
-            renderRuntime.model.value[key] =
-              renderRuntime.defaultValueModel[key];
+            renderRuntime.model.value[key] = cloneDeep(
+              renderRuntime.defaultValueModel[key]
+            );
           });
         };
         const stack = [];

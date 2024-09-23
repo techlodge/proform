@@ -25,7 +25,7 @@ export default class DataProcessor {
   effects: Record<string, Set<AnyFunction>> = {};
   effetcsFilter = new Map();
   keysUsingFieldByTarget = new Map();
-  afterModelUpdateEffects = new Map<AnyObject, Set<AnyFunction>>();
+  afterModelUpdateEffects = new Map<string, Set<AnyFunction>>();
   modelProcessProgress = new Map();
   prevModelState;
   nonDeepProcessableKeys = ["component"];
@@ -56,19 +56,48 @@ export default class DataProcessor {
       () => this.model.value,
       (newValue) => {
         if (isEqual(newValue, this.prevModelState.value)) return;
-
-        for (const key of Object.keys(newValue)) {
-          if (
-            !isEqual(newValue[key], this.prevModelState.value[key]) &&
-            this.effects[key]
-          ) {
-            Array.from(this.effects[key]).forEach((effect) => effect());
-          }
-        }
+        this.deepCompareAndTriggerEffects(newValue, this.prevModelState.value);
         this.prevModelState.value = cloneDeep(newValue);
       },
       { deep: true }
     );
+  }
+
+  private deepCompareAndTriggerEffects(
+    newValue: any,
+    oldValue: any,
+    path: string = ""
+  ) {
+    if (isPlainObject(newValue) && isPlainObject(oldValue)) {
+      for (const key of new Set([
+        ...Object.keys(newValue),
+        ...Object.keys(oldValue),
+      ])) {
+        const newPath = path ? `${path}.${key}` : key;
+        this.deepCompareAndTriggerEffects(
+          newValue[key],
+          oldValue[key],
+          newPath
+        );
+      }
+    } else if (Array.isArray(newValue) && Array.isArray(oldValue)) {
+      const maxLength = Math.max(newValue.length, oldValue.length);
+      for (let i = 0; i < maxLength; i++) {
+        this.deepCompareAndTriggerEffects(
+          newValue[i],
+          oldValue[i],
+          `${path}[${i}]`
+        );
+      }
+    } else if (!isEqual(newValue, oldValue)) {
+      // 获取最顶层的字段名
+      const topLevelField = path.split(/[.\[]/, 1)[0];
+      path = topLevelField;
+
+      if (this.effects[path]) {
+        Array.from(this.effects[path]).forEach((effect) => effect());
+      }
+    }
   }
 
   processSchema(rawSchema: RawSchema) {
@@ -77,28 +106,62 @@ export default class DataProcessor {
     });
   }
 
-  stableEachKey({ target, rawUpdate }: StableEachKeyOptions) {
+  stableEachKey({ target, rawUpdate, parentTarget }: StableEachKeyOptions) {
     Object.keys(target).forEach((key) => {
       this.processValueOrFunction({
         target,
         input: get(target, key),
         key,
-        update: (stable) => {
+        parentTarget,
+        update: (stable, parentTarget) => {
+          if (parentTarget) {
+            parentTarget.children.find(
+              (child: RawSchema) => child.field === target.field
+            )[key] = stable;
+          } else {
+            set(target, key, stable);
+          }
+          if (key === "children") {
+            if (stable) {
+              const children = stable.map((child: RawSchema) => {
+                return this.stableEachKey({
+                  target: child,
+                  parentTarget: target,
+                });
+              });
+              set(target, key, children);
+            }
+          }
           rawUpdate
             ? rawUpdate(set(target, key, stable))
             : set(target, key, stable);
         },
       });
     });
+    return target;
   }
 
-  handleDefaultValue(target: RawSchema) {
+  handleDefaultValue(target: RawSchema, parentTarget?: RawSchema) {
     let afterModelUpdateEffects =
-      this.afterModelUpdateEffects.get(target) ?? new Set();
+      this.afterModelUpdateEffects.get(
+        parentTarget?.field
+          ? `${parentTarget.field}.${target.field}`
+          : (target.field as string)
+      ) ?? new Set();
     afterModelUpdateEffects.add(() => {
-      this.modelProcessProgress.set(target, true);
+      this.modelProcessProgress.set(
+        parentTarget?.field
+          ? `${parentTarget.field}.${target.field}`
+          : target.field,
+        true
+      );
     });
-    this.afterModelUpdateEffects.set(target, afterModelUpdateEffects);
+    this.afterModelUpdateEffects.set(
+      parentTarget?.field
+        ? `${parentTarget.field}.${target.field}`
+        : (target.field as string),
+      afterModelUpdateEffects
+    );
   }
 
   createProxyedModel({
@@ -107,6 +170,7 @@ export default class DataProcessor {
     isHandlingDefaultValue,
     target,
     key,
+    parentTarget,
   }: CreateProxyedModelOptions) {
     const proxyedModel = new Proxy(
       {
@@ -150,7 +214,11 @@ export default class DataProcessor {
                   key,
                   rawUpdate: update,
                   update: (res: any) => {
-                    update(res);
+                    if (parentTarget) {
+                      update(res, parentTarget);
+                    } else {
+                      update(res);
+                    }
                     if (isHandlingDefaultValue) {
                       this.handleDefaultValue(target);
                       publishEffectsByKey.delete(effect);
@@ -227,7 +295,11 @@ export default class DataProcessor {
                   this.nonDeepProcessableKeys.includes(key),
                 rawUpdate: update,
                 update: (res: any) => {
-                  update(res);
+                  if (parentTarget) {
+                    update(res, parentTarget);
+                  } else {
+                    update(res);
+                  }
                   if (isHandlingDefaultValue) {
                     this.handleDefaultValue(target);
                     this.effects[field].delete(effect);
@@ -242,7 +314,6 @@ export default class DataProcessor {
               this.effects[field].add(effect);
             }
           }
-
           return this.model.value[field];
         },
         set: (_, field, value) => {
@@ -293,6 +364,7 @@ export default class DataProcessor {
     input,
     update,
     key,
+    parentTarget,
   }: ProcessValueOrFunctionOptions) {
     nextTick(() => {
       if (!target.hasOwnProperty("defaultValue") && isString(target.field)) {
@@ -314,6 +386,7 @@ export default class DataProcessor {
         target,
         key,
         isHandlingDefaultValue,
+        parentTarget,
       });
       const fnRes = input({
         model: proxyedModel,
@@ -339,11 +412,24 @@ export default class DataProcessor {
         update: (res: any) => {
           if (update) {
             if (isHandlingDefaultValue) {
-              this.updatedefaultValueModel((draft) => {
-                draft[target.field as string] = res;
-              });
-              if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
-                this.handleDefaultValue(target);
+              if (!parentTarget) {
+                this.updatedefaultValueModel((draft) => {
+                  draft[target.field as string] = res;
+                });
+                if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
+                  this.handleDefaultValue(target);
+                }
+              } else {
+                this.updatedefaultValueModel((draft) => {
+                  if (!draft[parentTarget.field as string]) {
+                    draft[parentTarget.field as string] = {};
+                  }
+                  draft[parentTarget.field as string][target.field as string] =
+                    res;
+                });
+                if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
+                  this.handleDefaultValue(target);
+                }
               }
             }
             update(res);
@@ -360,9 +446,26 @@ export default class DataProcessor {
           update: (res: any) => {
             update(res);
             if (isHandlingDefaultValue) {
-              this.updatedefaultValueModel((draft) => {
-                draft[target.field as string] = res;
-              });
+              if (!parentTarget) {
+                this.updatedefaultValueModel((draft) => {
+                  draft[target.field as string] = res;
+                });
+                if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
+                  this.handleDefaultValue(target);
+                }
+              } else {
+                this.updatedefaultValueModel((draft) => {
+                  if (!draft[parentTarget.field as string]) {
+                    draft[parentTarget.field as string] = [{}];
+                  }
+                  draft[parentTarget.field as string][0][
+                    target.field as string
+                  ] = res;
+                });
+                if (!this.keysUsingFieldByTarget.get(target)?.has(key)) {
+                  this.handleDefaultValue(target, parentTarget);
+                }
+              }
             }
           },
           rawUpdate: update,

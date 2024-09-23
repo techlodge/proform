@@ -1,14 +1,26 @@
 import { builtinAdaptersConfig } from "@/core/Configurations/Adapters";
 import GlobalConfiguration from "@/core/Configurations/Global";
 import DataProcessor from "@/core/Processors/Data";
-import { DOMType, StabledSchema } from "@/core/Processors/Data/types";
+import {
+  DOMType,
+  PartialStabledSchema,
+  StabledSchema,
+} from "@/core/Processors/Data/types";
 import RuntimeHandler from "@/core/Runtimes/Handler";
 import { RenderOptions } from "@/core/Runtimes/Render/types";
 import { AnyObject } from "@/global";
 import { FormCreateOptions } from "@/helpers/createForm/types";
 import { CustomizedAdapter, Layouts } from "@/helpers/setupForm/types";
 import { produce } from "immer";
-import { get, isBoolean, isFunction, isString, merge, set } from "lodash-es";
+import {
+  cloneDeep,
+  get,
+  isBoolean,
+  isFunction,
+  isString,
+  merge,
+  set,
+} from "lodash-es";
 import { defineComponent, ref, toRaw } from "vue";
 
 export default class RenderRuntime {
@@ -68,6 +80,10 @@ export default class RenderRuntime {
         return this.renderItemSchema({
           schema: stableSchema,
         });
+      case "list":
+        return this.renderListSchema({
+          schema: stableSchema as PartialStabledSchema,
+        });
       default:
         return this.renderItemSchema({
           schema: stableSchema,
@@ -75,7 +91,7 @@ export default class RenderRuntime {
     }
   }
 
-  renderItemSchema({ schema }: RenderOptions) {
+  renderItemSchema({ schema, parentSchema, modelIndex }: RenderOptions) {
     const Component = toRaw(schema.component) as DOMType;
     if (!Component) return;
 
@@ -91,12 +107,34 @@ export default class RenderRuntime {
 
     if (isString(schema.field)) {
       if (this.fieldsHasBeenSet.has(schema.field)) {
-        this.dataProcessor.modelProcessProgress.set(schema, true);
+        this.dataProcessor.modelProcessProgress.set(
+          parentSchema?.field
+            ? `${parentSchema.field}.${schema.field}`
+            : schema.field,
+          true
+        );
       }
-      if (!this.dataProcessor.modelProcessProgress.get(schema)) {
-        set(this.model.value, schema.field, schema.defaultValue);
+      if (
+        !this.dataProcessor.modelProcessProgress.get(
+          parentSchema?.field
+            ? `${parentSchema.field}.${schema.field}`
+            : schema.field
+        )
+      ) {
+        set(
+          this.model.value,
+          parentSchema?.field
+            ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+            : schema.field,
+          schema.defaultValue
+        );
+
         Array.from(
-          this.dataProcessor.afterModelUpdateEffects.get(schema) ?? []
+          this.dataProcessor.afterModelUpdateEffects.get(
+            parentSchema?.field
+              ? `${parentSchema.field}.${schema.field}`
+              : schema.field
+          ) ?? []
         ).forEach((effect) => effect());
       }
     }
@@ -132,7 +170,11 @@ export default class RenderRuntime {
           {...formItemProps}
           label={schema.label}
           rules={rules}
-          {...this.adapters.adaptiveFormElementPath(schema.field)}
+          {...this.adapters.adaptiveFormElementPath(
+            parentSchema?.field
+              ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+              : schema.field
+          )}
         >
           {{
             ...formItemSlots,
@@ -140,9 +182,20 @@ export default class RenderRuntime {
               return (
                 <Component
                   {...schema.componentProps}
-                  modelValue={get(this.model.value, schema.field)}
+                  modelValue={get(
+                    this.model.value,
+                    parentSchema?.field
+                      ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+                      : schema.field
+                  )}
                   onUpdate:modelValue={(value: any) => {
-                    set(this.model.value, schema.field, value);
+                    set(
+                      this.model.value,
+                      parentSchema?.field
+                        ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+                        : schema.field,
+                      value
+                    );
                   }}
                 />
               );
@@ -154,7 +207,45 @@ export default class RenderRuntime {
   }
 
   renderListSchema({ schema }: RenderOptions) {
-    return this.renderItemSchema({ schema });
+    if (!this.model.value[schema.field]) {
+      this.model.value[schema.field] = [{}];
+    }
+    return (
+      <this.layouts.FormLayouts.ListWrapper>
+        {{
+          label: () => {
+            return schema.label;
+          },
+          add: () => {
+            return (
+              <div
+                onClick={() => {
+                  this.model.value[schema.field].push(
+                    cloneDeep(this.defaultValueModel[schema.field][0])
+                  );
+                }}
+              >
+                add
+              </div>
+            );
+          },
+          default: () => {
+            return this.model.value[schema.field].map(
+              (_: AnyObject, modelIndex: number) =>
+                schema.children?.map((child) => (
+                  <this.layouts.FormLayouts.ListItem key={child.field}>
+                    {this.renderItemSchema({
+                      schema: child,
+                      parentSchema: schema,
+                      modelIndex,
+                    })}
+                  </this.layouts.FormLayouts.ListItem>
+                ))
+            );
+          },
+        }}
+      </this.layouts.FormLayouts.ListWrapper>
+    );
   }
 
   execute(): typeof this.layouts.Form {

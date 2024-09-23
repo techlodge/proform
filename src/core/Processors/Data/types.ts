@@ -68,7 +68,7 @@ export type PartialStabledSchema = {
   rules?: AnyArray;
   required?: boolean | string;
   customizations?: Customizations;
-  children?: StabledItemSchema[] | ((context: Context) => StabledItemSchema[]);
+  children?: StabledItemSchema[];
 };
 
 export type RawItemSchema = {
@@ -100,6 +100,7 @@ export type SchemaTransformer<T> =
 
 export interface StableEachKeyOptions {
   target: RawSchema;
+  parentTarget?: RawSchema;
   rawUpdate?: AnyFunction;
 }
 
@@ -109,6 +110,8 @@ export interface ProcessValueOrFunctionOptions {
   afterUpdate?: AnyFunction;
   key: string;
   target: RawSchema;
+  parentTarget?: RawSchema;
+  rawUpdate?: AnyFunction;
 }
 
 export interface CreateProxyedModelOptions {
@@ -117,4 +120,6 @@ export interface CreateProxyedModelOptions {
   isHandlingDefaultValue: boolean;
   target: RawSchema;
   key: string;
+  parentTarget?: RawSchema;
+  rawUpdate?: AnyFunction;
 }
