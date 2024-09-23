@@ -362,12 +362,22 @@ export default class DataProcessor {
       if (!target.hasOwnProperty("defaultValue") && isString(target.field)) {
         if (this.fieldsWithEffects.has(target.field)) {
           Array.from(this.fieldsWithEffects.get(target.field)).forEach(
-            (_target) => {
-              this.modelProcessProgress.set(_target, true);
+            (_target: any) => {
+              this.modelProcessProgress.set(
+                parentTarget?.field
+                  ? `${parentTarget.field}.${_target.field}`
+                  : _target.field,
+                true
+              );
             }
           );
         }
-        this.modelProcessProgress.set(target, true);
+        this.modelProcessProgress.set(
+          parentTarget?.field
+            ? `${parentTarget.field}.${target.field}`
+            : target.field,
+          true
+        );
       }
     });
     const isHandlingDefaultValue = key === "defaultValue";
