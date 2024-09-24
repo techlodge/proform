@@ -54,10 +54,20 @@ export type StabledListSchema = {
   children: StabledItemSchema[] | ((context: Context) => StabledItemSchema[]);
 };
 
-export type StabledSchema = StabledItemSchema | StabledListSchema;
+export type StabledGroupSchema = {
+  type: "group";
+  label?: string;
+  field?: string;
+  children: StabledItemSchema[] | ((context: Context) => StabledItemSchema[]);
+};
+
+export type StabledSchema =
+  | StabledItemSchema
+  | StabledListSchema
+  | StabledGroupSchema;
 
 export type PartialStabledSchema = {
-  type?: "item" | "list";
+  type?: "item" | "list" | "group";
   label?: string;
   field: string;
   component?: ComponentType;
@@ -84,7 +94,14 @@ export type RawListSchema = {
   children: SchemaTransformer<RawSchema[]>;
 };
 
-export type RawSchema = RawItemSchema | RawListSchema;
+export type RawGroupSchema = {
+  type: "group";
+  label?: SchemaTransformer<string>;
+  field?: SchemaTransformer<string>;
+  children: SchemaTransformer<RawSchema[]>;
+};
+
+export type RawSchema = RawItemSchema | RawListSchema | RawGroupSchema;
 
 export interface Context {
   model: AnyObject;

@@ -21,6 +21,7 @@ export interface Layouts {
   FormLayouts: {
     ListWrapper: Component;
     ListItem: Component;
+    GroupWrapper: Component;
   };
 }
 

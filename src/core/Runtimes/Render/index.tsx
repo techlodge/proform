@@ -84,6 +84,10 @@ export default class RenderRuntime {
         return this.renderListSchema({
           schema: stableSchema as PartialStabledSchema,
         });
+      case "group":
+        return this.renderGroupSchema({
+          schema: stableSchema as PartialStabledSchema,
+        });
       default:
         return this.renderItemSchema({
           schema: stableSchema,
@@ -248,6 +252,20 @@ export default class RenderRuntime {
     );
   }
 
+  renderGroupSchema({ schema }: RenderOptions) {
+    return (
+      <this.layouts.FormLayouts.GroupWrapper>
+        {{
+          label: () => {
+            return schema.label;
+          },
+          default: () => {
+            return schema.children?.map(this.renderSchema.bind(this));
+          },
+        }}
+      </this.layouts.FormLayouts.GroupWrapper>
+    );
+  }
   execute(): typeof this.layouts.Form {
     return defineComponent(() => {
       return () => (
