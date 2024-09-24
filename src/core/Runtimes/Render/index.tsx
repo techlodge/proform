@@ -36,6 +36,7 @@ export default class RenderRuntime {
   runtimeHandler: RuntimeHandler;
   formProps;
   formSlots;
+  componentRefs = {} as AnyObject;
 
   constructor(public formCreateOption: FormCreateOptions) {
     this.template = GlobalConfiguration.getTemplate(formCreateOption.template);
@@ -183,8 +184,28 @@ export default class RenderRuntime {
           {{
             ...formItemSlots,
             default: () => {
+              if (
+                !this.componentRefs[
+                  parentSchema?.field
+                    ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+                    : schema.field
+                ]
+              ) {
+                this.componentRefs[
+                  parentSchema?.field
+                    ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+                    : schema.field
+                ] = ref();
+              }
               return (
                 <Component
+                  ref={
+                    this.componentRefs[
+                      parentSchema?.field
+                        ? `${parentSchema.field}.${modelIndex}.${schema.field}`
+                        : schema.field
+                    ]
+                  }
                   {...schema.componentProps}
                   modelValue={get(
                     this.model.value,

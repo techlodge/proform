@@ -208,6 +208,7 @@ export default class DataProcessor {
                       this.model.value[key] = data[key];
                     });
                   },
+                  componentRefs: this.renderRuntime.componentRefs,
                 });
                 this.processValueSyncOrAsync({
                   input: executionResult,
@@ -283,6 +284,7 @@ export default class DataProcessor {
                     this.model.value[key] = data[key];
                   });
                 },
+                componentRefs: this.renderRuntime.componentRefs,
               });
               this.processValueSyncOrAsync({
                 input: executionResult,
@@ -402,6 +404,7 @@ export default class DataProcessor {
             this.model.value[key] = data[key];
           });
         },
+        componentRefs: this.renderRuntime.componentRefs,
       });
       // undefined 意味着过程中的值
       update?.(undefined);

@@ -108,6 +108,7 @@ export interface Context {
   published: AnyObject;
   publish: (data: AnyObject) => any;
   hydrate: (data: AnyObject) => any;
+  componentRefs: AnyObject;
 }
 
 export type SchemaTransformer<T> =
