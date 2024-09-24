@@ -124,7 +124,7 @@ export default class RenderRuntime {
         set(
           this.model.value,
           parentSchema?.field
-            ? `${parentSchema.field}.${schema.field}`
+            ? `${parentSchema.field}.${modelIndex}.${schema.field}`
             : schema.field,
           schema.defaultValue
         );
