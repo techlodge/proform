@@ -7,7 +7,7 @@ async function getReleaseLine(changeset, type) {
 
   // 查找 [unreleased] 部分
   const unreleasedRegex =
-    /## \[unreleased\]\s*([\s\S]*?)(?=\n## \[\d+\.\d+\.\d+\]|$)/i;
+    /## \[unreleased\]\s*([\s\S]*?)(?=\n### \[\d+\.\d+\.\d+\]|$)/i;
   const match = changelog.match(unreleasedRegex);
 
   if (!match) {
