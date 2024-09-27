@@ -15,8 +15,6 @@ async function getReleaseLine(changeset, type) {
 
   // 打印当前目录下所有文件
   const files = fs.readdirSync(process.cwd());
-  console.log("process.cwd()", changelogPath);
-  console.log("当前目录下所有文件:", files);
 
   let changelog;
   try {
