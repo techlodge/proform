@@ -1,47 +1,25 @@
 # Changelog
 
-## 0.0.2
-
-### Patch Changes
-
-### Patch Changes
-
-### 🚀 Features
-
-- Enable tag_pattern
-- Implement my-changelog-config
-
-### 🐛 Bug Fixes
-
-- Fix: resolve data reset error issue
-
-### 🚜 Refactor
-
-- Use immerjs to restructure reset logic and optimize default value handling
-- Reduce bundle size
-- Disable sourcemap generation for production builds
-
-### ⚙️ Miscellaneous Tasks
-
-- Update README.md and CHANGELOG.md
-- Update CHAHGELOG.md
-- Add --mode development to cmd dev
-- Release proform to v0.0.1
-
 All notable changes to this project will be documented in this file.
 
-## 0.0.1
-
-### Patch Changes
+## [0.0.2] - 2024-09-27
 
 ### 🚀 Features
 
 - Enable tag_pattern
-- Implement my-changelog-config
+- Update project types
+- Implement reactive form data and publish for list type (draft)
+- Implement reactive form data and publish for group type
+- Add componentRefs
 
 ### 🐛 Bug Fixes
 
 - Fix: resolve data reset error issue
+- Resolve unexpected dependency update behavior
+- Fix defaultValue handle logic
+- Fix bug of error value collecting
+- Fix bug of error value setting
+- Disable function type for 'children' in configuration
 
 ### 🚜 Refactor
 
@@ -49,31 +27,9 @@ All notable changes to this project will be documented in this file.
 - Reduce bundle size
 - Disable sourcemap generation for production builds
 
-### ⚙️ Miscellaneous Tasks
+### 🎨 Styling
 
-- Update README.md and CHANGELOG.md
-- Update CHAHGELOG.md
-- Add --mode development to cmd dev
-- Release proform to v0.0.1
-
-All notable changes to this project will be documented in this file.
-
-## [unreleased]
-
-### 🚀 Features
-
-- Enable tag_pattern
-- Implement my-changelog-config
-
-### 🐛 Bug Fixes
-
-- Fix: resolve data reset error issue
-
-### 🚜 Refactor
-
-- Use immerjs to restructure reset logic and optimize default value handling
-- Reduce bundle size
-- Disable sourcemap generation for production builds
+- Improve code style
 
 ### ⚙️ Miscellaneous Tasks
 
