@@ -51,14 +51,14 @@ export type StabledListSchema = {
   type: "list";
   label?: string;
   field: string;
-  children: StabledItemSchema[] | ((context: Context) => StabledItemSchema[]);
+  children: StabledItemSchema[];
 };
 
 export type StabledGroupSchema = {
   type: "group";
   label?: string;
   field?: string;
-  children: StabledItemSchema[] | ((context: Context) => StabledItemSchema[]);
+  children: StabledItemSchema[];
 };
 
 export type StabledSchema =
@@ -91,14 +91,14 @@ export type RawListSchema = {
   type: "list";
   label?: SchemaTransformer<string>;
   field: SchemaTransformer<string>;
-  children: SchemaTransformer<RawSchema[]>;
+  children: RawSchema[];
 };
 
 export type RawGroupSchema = {
   type: "group";
   label?: SchemaTransformer<string>;
   field?: SchemaTransformer<string>;
-  children: SchemaTransformer<RawSchema[]>;
+  children: RawSchema[];
 };
 
 export type RawSchema = RawItemSchema | RawListSchema | RawGroupSchema;
