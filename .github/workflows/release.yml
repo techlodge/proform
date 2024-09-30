@@ -66,6 +66,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Delete temp changelog
-        run: rm TEMP_CHANGELOG.md
+      - name: Delete TEMP_CHANGELOG.md from repository
         if: steps.changesets.outputs.published == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git rm TEMP_CHANGELOG.md
+          git commit -m "chore: remove TEMP_CHANGELOG.md after release [skip ci]"
+          git push
