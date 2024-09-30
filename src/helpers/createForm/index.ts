@@ -2,6 +2,7 @@ import { AnyFunction, AnyObject } from "@/global";
 import { FormCreateOptions } from "./types";
 import FormCreateProcessor from "@/core/Processors/FormCreate";
 import { cloneDeep, isUndefined } from "lodash-es";
+import { RawSchema } from "@/helpers/types";
 
 /**
  * vision
@@ -11,6 +12,7 @@ import { cloneDeep, isUndefined } from "lodash-es";
 export function createForm(formCreateOptions: FormCreateOptions) {
   const formCreateProcessor = new FormCreateProcessor(formCreateOptions);
   const renderRuntime = formCreateProcessor.renderRuntime;
+
   return [
     renderRuntime.execute(),
     {
@@ -57,6 +59,39 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           stack.push(resetModel);
         }
         stack.forEach((fn) => fn());
+      },
+      updateSchema(
+        schema: RawSchema[],
+        { clearPreviousState = true }: AnyObject
+      ) {
+        renderRuntime.formProps.value = {};
+        renderRuntime.formSlots.value = {};
+        if (!clearPreviousState) {
+          renderRuntime.dataProcessor.processSchemas(schema);
+          return;
+        }
+
+        function extractUniqueFields(schemas: RawSchema[]): string[] {
+          const fields = new Set<string>();
+          schemas.forEach((schema) => {
+            if (schema.field) {
+              fields.add(schema.field as string);
+            }
+          });
+          return Array.from(fields);
+        }
+
+        renderRuntime.dataProcessor.processSchemas(schema);
+        const schemas = cloneDeep(renderRuntime.stableSchemas.value);
+        const uniqueFields = extractUniqueFields(schemas);
+
+        renderRuntime.model.value = cloneDeep(renderRuntime.defaultValueModel);
+
+        Object.keys(renderRuntime.model.value).forEach((key) => {
+          if (!uniqueFields.includes(key)) {
+            delete renderRuntime.model.value[key];
+          }
+        });
       },
     },
   ] as const;
