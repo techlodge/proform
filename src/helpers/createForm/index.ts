@@ -70,7 +70,6 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           renderRuntime.dataProcessor.processSchemas(schema);
           return;
         }
-
         function extractUniqueFields(schemas: RawSchema[]): string[] {
           const fields = new Set<string>();
           schemas.forEach((schema) => {
@@ -80,16 +79,18 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           });
           return Array.from(fields);
         }
-
         renderRuntime.dataProcessor.processSchemas(schema);
         const schemas = cloneDeep(renderRuntime.stableSchemas.value);
         const uniqueFields = extractUniqueFields(schemas);
-
         renderRuntime.model.value = cloneDeep(renderRuntime.defaultValueModel);
-
         Object.keys(renderRuntime.model.value).forEach((key) => {
           if (!uniqueFields.includes(key)) {
             delete renderRuntime.model.value[key];
+          }
+        });
+        uniqueFields.forEach((key) => {
+          if (!renderRuntime.model.value.hasOwnProperty(key)) {
+            renderRuntime.model.value[key] = undefined;
           }
         });
       },
