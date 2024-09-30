@@ -26,6 +26,7 @@ export interface Customizations {
     props?: AnyObject;
     slots?: AnyObject;
   };
+  listLabel?: AnyFunction;
 }
 
 export type ComponentType =
@@ -56,6 +57,7 @@ export type StabledListSchema = {
   showDeleteButton?: boolean;
   minCount?: number;
   maxCount?: number;
+  customizations?: Customizations;
 };
 
 export type StabledGroupSchema = {
@@ -104,6 +106,7 @@ export type RawListSchema = {
   showDeleteButton?: SchemaTransformer<boolean>;
   minCount?: SchemaTransformer<number>;
   maxCount?: SchemaTransformer<number>;
+  customizations?: Customizations;
 };
 
 export type RawGroupSchema = {

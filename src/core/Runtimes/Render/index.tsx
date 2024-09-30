@@ -106,7 +106,10 @@ export default class RenderRuntime {
       formSlots = {},
       formItemProps = {},
       formItemSlots = {},
-    } = this.runtimeHandler.handleCustomizations(schema.customizations);
+      listLabel,
+    } = this.runtimeHandler.handleCustomizations(
+      schema.customizations ?? parentSchema?.customizations
+    );
 
     merge(this.formProps.value, formProps);
     merge(this.formSlots.value, formSlots);
@@ -150,7 +153,8 @@ export default class RenderRuntime {
       delete this.model.value[schema.field];
     }
 
-    const { label, required, rules: originalRules } = schema;
+    let { label, required, rules: originalRules } = schema;
+    label = listLabel ? listLabel(label, modelIndex) : label;
     const defaultRequiredMessage = `${label}是必填项`;
     const rules = originalRules ? [...originalRules] : [];
     const requiredRuleIndex = rules.findIndex((rule) => rule.required);
@@ -174,7 +178,7 @@ export default class RenderRuntime {
       showable && (
         <this.layouts.FormItem
           {...formItemProps}
-          label={schema.label}
+          label={label}
           rules={rules}
           {...this.adapters.adaptiveFormElementPath(
             parentSchema?.field

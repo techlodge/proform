@@ -20,6 +20,7 @@ export default class RuntimeHandler {
       formSlots: formCustomizations?.slots,
       formItemProps: formItemCustomizations?.props,
       formItemSlots: formItemCustomizations?.slots,
+      listLabel: customizations?.listLabel,
     };
   }
 }
