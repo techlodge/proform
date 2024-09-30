@@ -154,7 +154,7 @@ export default class RenderRuntime {
     }
 
     let { label, required, rules: originalRules } = schema;
-    label = listLabel ? listLabel(label, modelIndex) : label;
+    label = isFunction(listLabel) ? listLabel(label, modelIndex) : label;
     const defaultRequiredMessage = `${label}是必填项`;
     const rules = originalRules ? [...originalRules] : [];
     const requiredRuleIndex = rules.findIndex((rule) => rule.required);
