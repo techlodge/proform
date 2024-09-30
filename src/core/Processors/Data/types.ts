@@ -52,6 +52,10 @@ export type StabledListSchema = {
   label?: string;
   field: string;
   children: StabledItemSchema[];
+  showAddButton?: boolean;
+  showDeleteButton?: boolean;
+  minCount?: number;
+  maxCount?: number;
 };
 
 export type StabledGroupSchema = {
@@ -79,6 +83,10 @@ export type PartialStabledSchema = {
   required?: boolean | string;
   customizations?: Customizations;
   children?: StabledItemSchema[];
+  showAddButton?: boolean;
+  showDeleteButton?: boolean;
+  minCount?: number;
+  maxCount?: number;
 };
 
 export type RawItemSchema = {
@@ -92,6 +100,10 @@ export type RawListSchema = {
   label?: SchemaTransformer<string>;
   field: SchemaTransformer<string>;
   children: RawSchema[];
+  showAddButton?: SchemaTransformer<boolean>;
+  showDeleteButton?: SchemaTransformer<boolean>;
+  minCount?: SchemaTransformer<number>;
+  maxCount?: SchemaTransformer<number>;
 };
 
 export type RawGroupSchema = {

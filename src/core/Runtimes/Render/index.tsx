@@ -17,6 +17,7 @@ import {
   get,
   isBoolean,
   isFunction,
+  isNumber,
   isString,
   merge,
   set,
@@ -241,31 +242,63 @@ export default class RenderRuntime {
           label: () => {
             return schema.label;
           },
-          add: () => {
+          add: ({ container: Container }: AnyObject) => {
+            let showable = schema.showAddButton ?? true;
+            if (isNumber(schema.maxCount)) {
+              showable =
+                showable &&
+                this.model.value[schema.field].length < schema.maxCount;
+            }
             return (
-              <div
-                onClick={() => {
-                  this.model.value[schema.field].push(
-                    cloneDeep(this.defaultValueModel[schema.field][0])
-                  );
-                }}
-              >
-                add
-              </div>
+              showable && (
+                <Container
+                  onClick={() => {
+                    this.model.value[schema.field].push(
+                      cloneDeep(this.defaultValueModel[schema.field][0])
+                    );
+                  }}
+                />
+              )
             );
           },
           default: () => {
             return this.model.value[schema.field].map(
-              (_: AnyObject, modelIndex: number) =>
-                schema.children?.map((child) => (
-                  <this.layouts.FormLayouts.ListItem key={child.field}>
-                    {this.renderItemSchema({
-                      schema: child,
-                      parentSchema: schema,
-                      modelIndex,
-                    })}
-                  </this.layouts.FormLayouts.ListItem>
-                ))
+              (_: AnyObject, modelIndex: number) => (
+                <this.layouts.FormLayouts.ListItem>
+                  {{
+                    default: () => {
+                      return schema.children?.map((child) =>
+                        this.renderItemSchema({
+                          schema: child,
+                          parentSchema: schema,
+                          modelIndex,
+                        })
+                      );
+                    },
+                    delete: ({ container: Container }: AnyObject) => {
+                      let showable = schema.showDeleteButton ?? true;
+                      if (isNumber(schema.minCount)) {
+                        showable =
+                          showable &&
+                          this.model.value[schema.field].length >
+                            schema.minCount;
+                      }
+                      return (
+                        showable && (
+                          <Container
+                            onClick={() => {
+                              this.model.value[schema.field].splice(
+                                modelIndex,
+                                1
+                              );
+                            }}
+                          />
+                        )
+                      );
+                    },
+                  }}
+                </this.layouts.FormLayouts.ListItem>
+              )
             );
           },
         }}
