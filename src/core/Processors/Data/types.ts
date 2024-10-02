@@ -27,6 +27,9 @@ export interface Customizations {
     slots?: AnyObject;
   };
   listLabel?: AnyFunction;
+  layout?: {
+    columns?: number;
+  };
 }
 
 export type ComponentType =
@@ -65,6 +68,7 @@ export type StabledGroupSchema = {
   label?: string;
   field?: string;
   children: StabledItemSchema[];
+  customizations?: Customizations;
 };
 
 export type StabledSchema =
@@ -114,6 +118,7 @@ export type RawGroupSchema = {
   label?: SchemaTransformer<string>;
   field?: SchemaTransformer<string>;
   children: RawSchema[];
+  customizations?: Customizations;
 };
 
 export type RawSchema = RawItemSchema | RawListSchema | RawGroupSchema;

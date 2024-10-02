@@ -23,6 +23,8 @@ import {
   set,
 } from "lodash-es";
 import { defineComponent, ref, toRaw } from "vue";
+import SpanWrapper from "@/core/Runtimes/Render/LayoutWrappers/SpanWrapper";
+import GridWrapper from "@/core/Runtimes/Render/LayoutWrappers/GridWrapper";
 
 export default class RenderRuntime {
   layouts: Layouts;
@@ -77,23 +79,44 @@ export default class RenderRuntime {
   }
 
   renderSchema(stableSchema: StabledSchema) {
+    let columns = stableSchema.customizations?.layout?.columns;
     switch (stableSchema.type) {
       case "item":
-        return this.renderItemSchema({
-          schema: stableSchema,
-        });
+        return (
+          <SpanWrapper columns={columns}>
+            {this.renderItemSchema({
+              schema: stableSchema,
+            })}
+          </SpanWrapper>
+        );
       case "list":
-        return this.renderListSchema({
-          schema: stableSchema as PartialStabledSchema,
-        });
+        return (
+          <SpanWrapper columns={columns}>
+            {this.renderListSchema({
+              schema: stableSchema as PartialStabledSchema,
+            })}
+          </SpanWrapper>
+        );
       case "group":
-        return this.renderGroupSchema({
-          schema: stableSchema as PartialStabledSchema,
-        });
+        stableSchema.customizations?.layout?.columns &&
+          (columns = stableSchema.customizations?.layout?.columns);
+        return (
+          <SpanWrapper columns={columns}>
+            {this.renderGroupSchema({
+              schema: stableSchema as PartialStabledSchema,
+            })}
+          </SpanWrapper>
+        );
       default:
-        return this.renderItemSchema({
-          schema: stableSchema,
-        });
+        stableSchema.customizations?.layout?.columns &&
+          (columns = stableSchema.customizations?.layout?.columns);
+        return (
+          <SpanWrapper columns={columns}>
+            {this.renderItemSchema({
+              schema: stableSchema,
+            })}
+          </SpanWrapper>
+        );
     }
   }
 
@@ -271,12 +294,27 @@ export default class RenderRuntime {
                 <this.layouts.FormLayouts.ListItem>
                   {{
                     default: () => {
-                      return schema.children?.map((child) =>
-                        this.renderItemSchema({
-                          schema: child,
-                          parentSchema: schema,
-                          modelIndex,
-                        })
+                      return (
+                        <GridWrapper>
+                          {schema.children?.map((child) => {
+                            let columns = 24;
+                            child.customizations?.layout?.columns &&
+                              (columns = child.customizations?.layout?.columns);
+                            return (
+                              <div
+                                style={{
+                                  gridColumn: `span ${columns}`,
+                                }}
+                              >
+                                {this.renderItemSchema({
+                                  schema: child,
+                                  parentSchema: schema,
+                                  modelIndex,
+                                })}
+                              </div>
+                            );
+                          })}
+                        </GridWrapper>
                       );
                     },
                     delete: ({ container: Container }: AnyObject) => {
@@ -331,6 +369,10 @@ export default class RenderRuntime {
           {...this.formProps.value}
           {...this.adapters.adaptiveFormData(this.model.value)}
           ref={this.formRef}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(24, 1fr)",
+          }}
         >
           {{
             ...this.formSlots.value,
