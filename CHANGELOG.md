@@ -53,7 +53,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.2] - 2024-09-27
+## 0.0.2
 
 ### 🚀 Features
 
@@ -89,7 +89,7 @@ All notable changes to this project will be documented in this file.
 - Add --mode development to cmd dev
 - Release proform to v0.0.1
 
-## [0.0.1] - 2024-09-02
+## 0.0.1
 
 ### 🚀 Features
 
