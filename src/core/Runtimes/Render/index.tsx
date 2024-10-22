@@ -140,7 +140,7 @@ export default class RenderRuntime {
     merge(this.formSlots.value, formSlots);
 
     if (isString(schema.field)) {
-      if (this.fieldsHasBeenSet.has(schema.field)) {
+      if (this.fieldsHasBeenSet.has(schema.field) && schema.defaultValue) {
         this.dataProcessor.modelProcessProgress.set(
           parentSchema?.field
             ? `${parentSchema.field}.${schema.field}`
@@ -153,7 +153,8 @@ export default class RenderRuntime {
           parentSchema?.field
             ? `${parentSchema.field}.${schema.field}`
             : schema.field
-        )
+        ) &&
+        schema.defaultValue
       ) {
         set(
           this.model.value,
