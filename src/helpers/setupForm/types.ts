@@ -1,3 +1,4 @@
+import { Customizations } from "@/core/Processors/Data/types";
 import { AnyFunction, AnyPromiseFunction } from "@/global";
 
 export type Component = any;
@@ -30,10 +31,14 @@ export type Templates = Record<
   | {
       layouts: Layouts;
       builtinAdapter: BuiltinAdapter;
+      layoutDisabled?: boolean;
+      customizations?: Customizations;
     }
   | {
       layouts: Layouts;
       customizedAdapter: CustomizedAdapter;
+      layoutDisabled?: boolean;
+      customizations?: Customizations;
     }
 >;
 

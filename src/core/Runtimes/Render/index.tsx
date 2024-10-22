@@ -131,7 +131,8 @@ export default class RenderRuntime {
       formItemSlots = {},
       listLabel,
     } = this.runtimeHandler.handleCustomizations(
-      schema.customizations ?? parentSchema?.customizations
+      schema.customizations ?? parentSchema?.customizations,
+      this.template
     );
 
     merge(this.formProps.value, formProps);
@@ -363,16 +364,21 @@ export default class RenderRuntime {
     );
   }
   execute(): typeof this.layouts.Form {
+    const layoutDisabled = GlobalConfiguration.getLayoutDisabled(this.template);
     return defineComponent(() => {
       return () => (
         <this.layouts.Form
           {...this.formProps.value}
           {...this.adapters.adaptiveFormData(this.model.value)}
           ref={this.formRef}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(24, 1fr)",
-          }}
+          style={
+            layoutDisabled
+              ? {}
+              : {
+                  display: "grid",
+                  gridTemplateColumns: "repeat(24, 1fr)",
+                }
+          }
         >
           {{
             ...this.formSlots.value,

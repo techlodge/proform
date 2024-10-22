@@ -29,6 +29,7 @@ export interface Customizations {
   listLabel?: AnyFunction;
   layout?: {
     columns?: number;
+    disabled?: boolean;
   };
 }
 

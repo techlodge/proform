@@ -10,4 +10,14 @@ export default class GlobalConfiguration {
   static getLayoutsByTemplate(template: string) {
     return GlobalConfiguration.formSetupOptions.templates[template].layouts;
   }
+
+  static getCustomizations(template: string) {
+    return GlobalConfiguration.formSetupOptions.templates[template]
+      .customizations;
+  }
+
+  static getLayoutDisabled(template: string) {
+    return GlobalConfiguration.formSetupOptions.templates[template]
+      .layoutDisabled;
+  }
 }
