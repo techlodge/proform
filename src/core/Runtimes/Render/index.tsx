@@ -19,6 +19,7 @@ import {
   isFunction,
   isNumber,
   isString,
+  isUndefined,
   merge,
   set,
 } from "lodash-es";
@@ -177,7 +178,28 @@ export default class RenderRuntime {
       delete this.model.value[schema.field];
     }
 
-    let { label, required, rules: originalRules } = schema;
+    let { label, required, rules: originalRules, placeholder } = schema;
+    if (!placeholder) {
+      let prefix = "请输入";
+      if (!isUndefined(Component.name)) {
+        if (
+          this.runtimeHandler.placeholderPreset[Component.name.toLowerCase()]
+        ) {
+          prefix =
+            this.runtimeHandler.placeholderPreset[Component.name.toLowerCase()];
+          placeholder = `${prefix}${label}`;
+        } else {
+          Object.keys(this.runtimeHandler.placeholderPreset).forEach((name) => {
+            if (Component.name.toLowerCase().includes(name.toLowerCase())) {
+              prefix = this.runtimeHandler.placeholderPreset[name];
+            }
+          });
+          placeholder = `${prefix}${label}`;
+        }
+      } else {
+        placeholder = `${prefix}${label}`;
+      }
+    }
     label = isFunction(listLabel) ? listLabel(label, modelIndex) : label;
     const defaultRequiredMessage = `${label}是必填项`;
     const rules = originalRules ? [...originalRules] : [];
@@ -235,6 +257,7 @@ export default class RenderRuntime {
                         : schema.field
                     ]
                   }
+                  placeholder={placeholder}
                   {...schema.componentProps}
                   modelValue={get(
                     this.model.value,

@@ -2,9 +2,13 @@ import GlobalConfiguration from "@/core/Configurations/Global";
 import { Customizations } from "@/core/Processors/Data/types";
 import { ref } from "vue";
 import { cloneDeep, merge } from "lodash-es";
+import { AnyObject } from "@/global";
 
 export default class RuntimeHandler {
-  constructor() {}
+  placeholderPreset: Record<string, string>;
+  constructor() {
+    this.placeholderPreset = this.handlePlaceholderPreset();
+  }
 
   initFormPropsAndSlots() {
     return {
@@ -31,5 +35,21 @@ export default class RuntimeHandler {
       listLabel: customizations?.listLabel,
       layout: customizations?.layout,
     };
+  }
+
+  private handlePlaceholderPreset() {
+    // prefix -> [avaliable component names]
+    // 都用小写，这样可以做相似性碰撞
+    const userFriendlyPreset: AnyObject = {
+      请选择: ["select", "tree", "cascader"],
+      请输入: ["input"],
+    };
+    const transformed: AnyObject = {};
+    for (const key in userFriendlyPreset) {
+      userFriendlyPreset[key].forEach((value: string) => {
+        transformed[value] = key;
+      });
+    }
+    return transformed;
   }
 }

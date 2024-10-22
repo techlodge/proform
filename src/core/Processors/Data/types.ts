@@ -94,6 +94,7 @@ export type PartialStabledSchema = {
   showDeleteButton?: boolean;
   minCount?: number;
   maxCount?: number;
+  placeholder?: string;
 };
 
 export type RawItemSchema = {
