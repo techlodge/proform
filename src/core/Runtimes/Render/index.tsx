@@ -56,7 +56,11 @@ export default class RenderRuntime {
     this.dataProcessor = new DataProcessor(this);
     this.processRawSchemas({
       input: formCreateOption.schemas,
-      update: this.dataProcessor.processSchemas.bind(this.dataProcessor),
+      // @ts-expect-error
+      update: (schemas) => {
+        this.dataProcessor = new DataProcessor(this);
+        return this.dataProcessor.processSchemas(cloneDeep(schemas));
+      },
     });
     this.runtimeHandler = new RuntimeHandler();
     const inited = this.runtimeHandler.initFormPropsAndSlots();

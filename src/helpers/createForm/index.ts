@@ -3,6 +3,7 @@ import { FormCreateOptions } from "./types";
 import FormCreateProcessor from "@/core/Processors/FormCreate";
 import { cloneDeep, isUndefined } from "lodash-es";
 import { RawSchema } from "@/helpers/types";
+import DataProcessor from "@/core/Processors/Data";
 
 /**
  * vision
@@ -67,7 +68,16 @@ export function createForm(formCreateOptions: FormCreateOptions) {
         renderRuntime.formProps.value = {};
         renderRuntime.formSlots.value = {};
         if (!clearPreviousState) {
-          renderRuntime.dataProcessor.processSchemas(schema);
+          renderRuntime.dataProcessor.effects = {};
+          renderRuntime.processRawSchemas({
+            input: schema,
+            update: (schemas: RawSchema[]) => {
+              renderRuntime.dataProcessor = new DataProcessor(renderRuntime);
+              return renderRuntime.dataProcessor.processSchemas(
+                cloneDeep(schemas)
+              );
+            },
+          });
           return;
         }
         function extractUniqueFields(schemas: RawSchema[]): string[] {
@@ -79,7 +89,15 @@ export function createForm(formCreateOptions: FormCreateOptions) {
           });
           return Array.from(fields);
         }
-        renderRuntime.dataProcessor.processSchemas(schema);
+        renderRuntime.processRawSchemas({
+          input: schema,
+          update: (schemas: RawSchema[]) => {
+            renderRuntime.dataProcessor = new DataProcessor(renderRuntime);
+            return renderRuntime.dataProcessor.processSchemas(
+              cloneDeep(schemas)
+            );
+          },
+        });
         const schemas = cloneDeep(renderRuntime.stableSchemas.value);
         const uniqueFields = extractUniqueFields(schemas);
         renderRuntime.model.value = cloneDeep(renderRuntime.defaultValueModel);
